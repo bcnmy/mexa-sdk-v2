@@ -17,6 +17,7 @@
     ],
     "rules": {
         "@typescript-eslint/indent": ["error"],
+        "@typescript-eslint/naming-convention": "off",
         "import/prefer-default-export": "off",
         "semi": ["error", "always"],
         "import/extensions": [
