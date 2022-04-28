@@ -67,3 +67,8 @@ export const biconomyForwarderAbi = [{ inputs: [{ internalType: 'address', name:
   stateMutability: 'view',
   type: 'function',
 }];
+export const eip2771BaseAbi = [{
+  inputs: [{ internalType: 'address', name: 'forwarder', type: 'address' }], name: 'isTrustedForwarder', outputs: [{ internalType: 'bool', name: '', type: 'bool' }], stateMutability: 'view', type: 'function',
+}, {
+  inputs: [], name: 'trustedForwarder', outputs: [{ internalType: 'address', name: '', type: 'address' }], stateMutability: 'view', type: 'function',
+}];

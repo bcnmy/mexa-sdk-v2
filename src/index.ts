@@ -10,12 +10,11 @@ import {
 import {
   formatMessage, getFetchOptions, isEthersProvider, logMessage, validateOptions,
 } from './utils';
-import { config, RESPONSE_CODES } from './config';
+import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-
-const { JSON_RPC_VERSION } = config;
+import { sendTransaction } from './helpers/send-transaction-helper';
 
 export class Biconomy extends EventEmitter implements IBiconomy {
   apiKey: string;
@@ -24,19 +23,23 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
   provider: ExternalProvider;
 
-  dappAPIMap = {};
+  private dappApiMap = {};
 
-  interfaceMap = {};
+  private interfaceMap = {};
 
-  smartContractMap = {};
+  private smartContractMap = {};
 
-  smartContractMetaTransactionMap = {};
+  private smartContractMetaTransactionMap = {};
 
-  smartContractTrustedForwarderMap = {};
+  private smartContractTrustedForwarderMap = {};
 
   strictMode = false;
 
   signer: any;
+
+  forwarderAddresses: string[] = [];
+
+  forwarderAddress: string = '';
 
   // Review type
   ethersProvider: any;
@@ -163,6 +166,7 @@ export class Biconomy extends EventEmitter implements IBiconomy {
       const getDappAPI = config.getApisPerDappUrl;
       fetch(getDappAPI, getFetchOptions('GET', apiKey))
         .then((response) => response.json())
+        // eslint-disable-next-line consistent-return
         .then(async (dappResponse) => {
           logMessage(dappResponse);
           if (dappResponse && dappResponse.dapp) {
@@ -179,7 +183,7 @@ export class Biconomy extends EventEmitter implements IBiconomy {
                 providerNetworkId, dappNetworkId, apiKey, dappId,
               });
             } else {
-              return eventEmitter.emit(
+              return this.emit(
                 EVENTS.BICONOMY_ERROR,
                 formatMessage(
                   RESPONSE_CODES.NETWORK_ID_NOT_FOUND,
@@ -189,12 +193,12 @@ export class Biconomy extends EventEmitter implements IBiconomy {
               );
             }
           } else if (dappResponse.log) {
-            eventEmitter.emit(
+            this.emit(
               EVENTS.BICONOMY_ERROR,
               formatMessage(RESPONSE_CODES.ERROR_RESPONSE, dappResponse.log),
             );
           } else {
-            eventEmitter.emit(
+            this.emit(
               EVENTS.BICONOMY_ERROR,
               formatMessage(
                 RESPONSE_CODES.DAPP_NOT_FOUND,
@@ -204,7 +208,7 @@ export class Biconomy extends EventEmitter implements IBiconomy {
           }
         })
         .catch((error) => {
-          eventEmitter.emit(
+          this.emit(
             EVENTS.BICONOMY_ERROR,
             formatMessage(
               RESPONSE_CODES.ERROR_RESPONSE,
@@ -214,7 +218,7 @@ export class Biconomy extends EventEmitter implements IBiconomy {
           );
         });
     } catch (error) {
-      eventEmitter.emit(
+      this.emit(
         EVENTS.BICONOMY_ERROR,
         formatMessage(
           RESPONSE_CODES.ERROR_RESPONSE,
@@ -225,16 +229,50 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     }
   }
 
-  async _getSystemInfo(dappDataForSystemInfo: DappDataForSystemInfoType) {
+  private async _getSystemInfo(dappDataForSystemInfo: DappDataForSystemInfoType) {
     this.networkId = dappDataForSystemInfo.providerNetworkId;
-    return getSystemInfo(this, dappDataForSystemInfo);
+    // Update properties based on return value
+    const systemInfoData = getSystemInfo(this, dappDataForSystemInfo);
   }
 
-  async _handleSendTransaction(method, params) {
-    return handleSendTransaction(this, method, params);
+  private async _handleSendTransaction(payload: any) {
+    const handleSendTransactionParams = {
+      payload,
+      interfaceMap: this.interfaceMap,
+      smartContractMetaTransactionMap: this.smartContractMetaTransactionMap,
+      smartContractMap: this.smartContractMap,
+    };
+    // Update properties based on return value
+    const handleSendTransactionData = handleSendTransaction(this, handleSendTransactionParams);
+    // call sendTransaction
+    const sendTransactionData = sendTransaction(this);
+    return sendTransactionData;
   }
 
-  async _sendSignedTransaction() {
-    return sendSignedTransaction(this);
+  private async _sendSignedTransaction(payload: any) {
+    const sendSignedTransactionParams = {
+      payload,
+    };
+    return sendSignedTransaction(this, sendSignedTransactionParams);
+  }
+
+  private setSmartContractMetaTransactionMap(newSmartContractMetatransactionMap: any) {
+    this.smartContractMetaTransactionMap = newSmartContractMetatransactionMap;
+  }
+
+  private setSmartContractTrustedForwarderMap(newSmartContractTrustedForwarderMap: any) {
+    this.smartContractTrustedForwarderMap = newSmartContractTrustedForwarderMap;
+  }
+
+  private setInterfaceMap(newInterfaceMap: any) {
+    this.interfaceMap = newInterfaceMap;
+  }
+
+  private setSmartContractMap(newSmartContractMap: any) {
+    this.smartContractMap = newSmartContractMap;
+  }
+
+  private setDappApiMap(newDappApiMap: any) {
+    this.dappApiMap = newDappApiMap;
   }
 }

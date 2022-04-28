@@ -19,10 +19,9 @@ import {
  */
 export const sendSignedTransaction = async (
   engine: IBiconomy,
-  payload: { params: any[]; },
-  interfaceMap: any,
-  smartContractMetaTransactionMap: any,
+  sendSignedTransactionParams
 ) => {
+  const { interfaceMap, params, smartContractMetaTransactionMap } = smartContractMetaTransactionMap;
   if (payload && payload.params[0]) {
     const data = payload.params[0];
     let rawTransaction;

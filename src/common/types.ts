@@ -7,13 +7,24 @@ export interface IBiconomy {
   dappAPIMap: any;
   signer: any;
   ethersProvider: any
+  smartContractTrustedForwarderMap: any,
+  forwarderAddresses: string[],
+  forwarderAddress: string
 }
+
+export type HandleSendTransactionParamsType = {
+  payload: any,
+  interfaceMap: any
+  smartContractMetaTransactionMap: any,
+  smartContractMap: any,
+};
 
 export type DappDataForSystemInfoType = {
   providerNetworkId: number,
   dappNetworkId: number,
   apiKey: string,
   dappId: string,
+  strictMode: boolean
 };
 export interface JsonRpcRequest {
   id: string | undefined;

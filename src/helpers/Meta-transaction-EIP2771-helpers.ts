@@ -1,4 +1,7 @@
 import txDecoder from 'ethereum-tx-decoder';
+import { ethers } from 'ethers';
+import { eip2771BaseAbi } from '../abis';
+import { IBiconomy } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
 import { decodeMethod, formatMessage, logMessage } from '../utils';
 
@@ -207,4 +210,94 @@ export const getForwardRequestAndMessageToSign = async (
   } catch (error) {
     throw new Error(`Something went wrong in getForwardRequestAndMessageToSign(). Error message: ${JSON.stringify(error)}`);
   }
+};
+
+export const buildForwardTxRequest = async (
+  account,
+  to,
+  gasLimitNum,
+  data,
+  biconomyForwarder,
+  batchId = 0,
+) => {
+  if (!biconomyForwarder) {
+    throw new Error('Biconomy Forwarder is not defined for current network');
+  }
+  const batchNonce = await biconomyForwarder.getNonce(account, batchId);
+  const req = {
+    from: account,
+    to,
+    token: ZERO_ADDRESS,
+    txGas: gasLimitNum,
+    tokenGasPrice: '0',
+    batchId,
+    batchNonce: parseInt(batchNonce),
+    deadline: Math.floor(Date.now() / 1000 + 3600),
+    data,
+  };
+  return { request: req };
+};
+
+export const getDomainSeperator = (biconomyForwarderDomainData) => {
+  const domainSeparator = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
+    'bytes32',
+    'bytes32',
+    'bytes32',
+    'address',
+    'bytes32',
+  ], [
+    ethers.utils.id('EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)'),
+    ethers.utils.id(biconomyForwarderDomainData.name),
+    ethers.utils.id(biconomyForwarderDomainData.version),
+    biconomyForwarderDomainData.verifyingContract,
+    biconomyForwarderDomainData.salt,
+  ]));
+  return domainSeparator;
+};
+
+export const findTheRightForwarder = async (engine: IBiconomy, to: string) => {
+  let forwarderToUse;
+  let ethersProvider;
+  if (engine.smartContractTrustedForwarderMap[to]) {
+    forwarderToUse = engine.smartContractTrustedForwarderMap[to];
+  } else {
+    ethersProvider = engine.ethersProvider;
+    const contract = new ethers.Contract(to, eip2771BaseAbi, ethersProvider);
+    const supportedForwarders = engine.forwarderAddresses;
+    forwarderToUse = engine.forwarderAddress; // default forwarder
+
+    // Attempt to find out forwarder that 'to' contract trusts
+    let forwarder;
+    try {
+      forwarder = await contract.trustedForwarder();
+    } catch (error) {
+      logMessage("Could not find read method 'trustedForwarder' in the contract abi");
+      logMessage(JSON.stringify(error));
+    }
+
+    for (let i = 0; i < supportedForwarders.length; i += 1) {
+      // Check if it matches above forwarder
+      if (forwarder) {
+        if (supportedForwarders[i].toString() === forwarder.toString()) {
+          forwarderToUse = supportedForwarders[i];
+          break;
+        }
+      }
+      // Another way to find out is isTrustedForwarder read method
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const isTrustedForwarder = await contract.isTrustedForwarder(supportedForwarders[i]);
+        if (isTrustedForwarder) {
+          forwarderToUse = supportedForwarders[i];
+          break;
+        }
+      } catch (error) {
+        logMessage("Could not find read method 'isTrustedForwarder' in the contract abi");
+        logMessage(JSON.stringify(error));
+      }
+    }
+    // return updated map
+    smartContractTrustedForwarderMap[to] = forwarderToUse;
+  }
+  return forwarderToUse;
 };
