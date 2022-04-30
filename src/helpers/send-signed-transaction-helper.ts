@@ -1,10 +1,12 @@
 import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
 import { IBiconomy } from '../common/types';
-import { config, RESPONSE_CODES } from '../config';
+import { config, EVENTS, RESPONSE_CODES } from '../config';
 import {
-  callDefaultProvider, decodeMethod, formatMessage, logMessage,
+  decodeMethod, formatMessage, logMessage,
 } from '../utils';
+import { findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
+import { sendTransaction } from './send-transaction-helper';
 
 /**
  * Method used to handle transaction initiated using web3.eth.sendSignedTransaction method
@@ -19,7 +21,7 @@ import {
  */
 export const sendSignedTransaction = async (
   engine: IBiconomy,
-  sendSignedTransactionParams
+  sendSignedTransactionParams,
 ) => {
   const { interfaceMap, params, smartContractMetaTransactionMap } = smartContractMetaTransactionMap;
   if (payload && payload.params[0]) {
@@ -74,13 +76,13 @@ export const sendSignedTransaction = async (
           }
         }
         const methodName = methodInfo.name;
-        let api = engine.dappAPIMap[to]
-          ? engine.dappAPIMap[to][methodName]
+        let api = engine.dappApiMap[to]
+          ? engine.dappApiMap[to][methodName]
           : undefined;
         let metaTxApproach;
         if (!api) {
-          api = engine.dappAPIMap[config.SCW]
-            ? engine.dappAPIMap[config.SCW][methodName]
+          api = engine.dappApiMap[config.SCW]
+            ? engine.dappApiMap[config.SCW][methodName]
             : undefined;
           metaTxApproach = smartContractMetaTransactionMap[config.SCW];
         } else {
@@ -186,7 +188,7 @@ export const sendSignedTransaction = async (
             }
 
             // Update the verifyingContract field of domain data based on the current request
-            if (signatureType && signatureType == engine.EIP712_SIGN) {
+            if (signatureType && signatureType === engine.EIP712_SIGN) {
               const domainSeparator = getDomainSeperator(
                 domainDataToUse,
               );
@@ -196,48 +198,50 @@ export const sendSignedTransaction = async (
 
             paramArray.push(signature);
 
-            const data = {};
-            data.from = account;
-            data.apiId = api.id;
-            data.params = paramArray;
-            data.to = to;
-            if (signatureType && signatureType == engine.EIP712_SIGN) {
-              data.signatureType = engine.EIP712_SIGN;
-            }
-            await _sendTransaction(engine, account, api, data, end);
+            const data = {
+              from: account,
+              apiId: api.id,
+              params: paramArray,
+              to,
+              signatureType: signatureType ? engine.EIP712_SIGN : engine.PERSONAL_SIGN,
+            };
+
+            await sendTransaction(engine, account, api, data, end);
           } else {
             paramArray.push(...methodInfo.args);
 
-            const data = {};
-            data.from = account;
-            data.apiId = api.id;
-            data.params = paramArray;
-            data.gasLimit = decodedTx.gasLimit.toString(); // verify
-            data.to = decodedTx.to.toLowerCase();
-            await _sendTransaction(engine, account, api, data, end);
+            const data = {
+              from: account,
+              apiId: api.id,
+              params: paramArray,
+              gasLimit: decodedTx.gasLimit.toString(), // verify
+              to: decodedTx.to.toLowerCase(),
+            };
+
+            await sendTransaction(engine, account, api, data, end);
           }
         } else if (signature) {
-          const relayerPayment = {};
-          relayerPayment.token = config.DEFAULT_RELAYER_PAYMENT_TOKEN_ADDRESS;
-          relayerPayment.amount = config.DEFAULT_RELAYER_PAYMENT_AMOUNT;
-
-          const data = {};
-          data.rawTx = rawTransaction;
-          data.signature = signature;
-          data.to = to;
-          data.from = account;
-          data.apiId = api.id;
-          data.data = decodedTx.data;
-          data.value = ethers.utils.hexValue(decodedTx.value);
-          data.gasLimit = decodedTx.gasLimit.toString();
-          data.nonceBatchId = config.NONCE_BATCH_ID;
-          data.expiry = config.EXPIRY;
-          data.baseGas = config.BASE_GAS;
-          data.relayerPayment = {
-            token: relayerPayment.token,
-            amount: relayerPayment.amount,
+          const relayerPayment = {
+            token: config.DEFAULT_RELAYER_PAYMENT_TOKEN_ADDRESS,
+            amount: config.DEFAULT_RELAYER_PAYMENT_AMOUNT,
           };
-          _sendTransaction(engine, account, api, data, end);
+
+          const data = {
+            rawTx: rawTransaction,
+            signature,
+            to,
+            from: account,
+            apiId: api.id,
+            data: decodedTx.data,
+            value: ethers.utils.hexValue(decodedTx.value),
+            gasLimit: decodedTx.gasLimit.toString(),
+            nonceBatchId: config.NONCE_BATCH_ID,
+            expiry: config.EXPIRY,
+            baseGas: config.BASE_GAS,
+            relayerPayment,
+          };
+
+          sendTransaction(engine, account, api, data, end);
         } else {
           const error = formatMessage(
             RESPONSE_CODES.INVALID_PAYLOAD,

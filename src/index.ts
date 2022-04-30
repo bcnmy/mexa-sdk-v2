@@ -57,6 +57,13 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
   dappId: string = '';
 
+  getSystemInfo: (
+    _engine: IBiconomy,
+    dappDataForSystemInfo: DappDataForSystemInfoType
+  ) => Promise<
+  { code: string; message: string; } |
+  { code: string; message: string; engine: IBiconomy; }>;
+
   constructor(provider: ExternalProvider, options: { apiKey: string; strictMode: boolean }) {
     super();
     validateOptions(options);
@@ -64,6 +71,7 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     this.strictMode = options.strictMode || false;
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
+    this.getSystemInfo = getSystemInfo;
 
     if (isEthersProvider(provider)) {
       this.ethersProvider = provider;
@@ -229,7 +237,13 @@ export class Biconomy extends EventEmitter implements IBiconomy {
             if (providerNetworkId) {
               providerNetworkId = parseInt(providerNetworkId.toString(), 10);
               // TODO
-              this.getSystemInfo = getSystemInfo;
+              this.getSystemInfo(this, {
+                providerNetworkId,
+                dappNetworkId: this.networkId,
+                dappId: this.dappId,
+                apiKey,
+                strictMode: this.strictMode,
+              });
             } else {
               return this.emit(
                 EVENTS.BICONOMY_ERROR,
@@ -277,14 +291,6 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     }
   }
 
-  private getSystemInfo = async (
-    dappDataForSystemInfo: DappDataForSystemInfoType,
-  ) => {
-    const engine = getSystemInfo(this, dappDataForSystemInfo);
-    // Assign values, discuss the better way
-    this = engine;
-  };
-
   private async _handleSendTransaction(method: any, params: any) {
     const handleSendTransactionParams = {
       payload,
@@ -299,9 +305,10 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     return sendTransactionData;
   }
 
-  private async _sendSignedTransaction(mthod: any, params: any) {
+  private async _sendSignedTransaction(method: any, params: any) {
     const sendSignedTransactionParams = {
-      payload,
+      method,
+      params,
     };
     return sendSignedTransaction(this, sendSignedTransactionParams);
   }

@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { HandleSendTransactionParamsType, IBiconomy } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
 import { decodeMethod, formatMessage, logMessage } from '../utils';
-import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './Meta-transaction-EIP2771-helpers';
+import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 import { getSignatureEIP712, getSignaturePersonal } from './signature-helpers';
 
 /**
@@ -244,7 +244,7 @@ export const handleSendTransaction = async (
               gasLimit,
             };
 
-            if (signatureType && signatureType == engine.EIP712_SIGN) {
+            if (signatureType && signatureType === engine.EIP712_SIGN) {
               data.signatureType = engine.EIP712_SIGN;
             }
             return {
