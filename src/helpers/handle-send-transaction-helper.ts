@@ -1,9 +1,10 @@
 import { ethers } from 'ethers';
-import { HandleSendTransactionParamsType, IBiconomy } from '../common/types';
+import { HandleSendTransactionParamsType } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
 import { decodeMethod, formatMessage, logMessage } from '../utils';
 import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 import { getSignatureEIP712, getSignaturePersonal } from './signature-helpers';
+import type { Biconomy } from '..';
 
 /**
   * Function decodes the parameter in payload and gets the user signature using eth_signTypedData_v4
@@ -12,24 +13,23 @@ import { getSignatureEIP712, getSignaturePersonal } from './signature-helpers';
   * This is an internal function that is called
   * while intercepting eth_sendTransaction RPC method call.
 * */
-export const handleSendTransaction = async (
-  engine: IBiconomy,
+export async function handleSendTransaction(
+  this: Biconomy,
   handleSendTransactionParams: HandleSendTransactionParamsType,
-) => {
+) {
   try {
     const {
-      payload, interfaceMap, smartContractMetaTransactionMap, smartContractMap,
+      method, params, fallback,
     } = handleSendTransactionParams;
-    logMessage('Handle transaction with payload');
-    logMessage(payload);
-    if (payload.params && payload.params[0] && payload.params[0].to) {
-      const to = payload.params[0].to.toLowerCase();
-      if (interfaceMap[to] || interfaceMap[config.SCW]) {
-        let methodInfo = decodeMethod(to, payload.params[0].data, interfaceMap);
+
+    if (params && params[0] && params[0].to) {
+      const to = params[0].to.toLowerCase();
+      if (this.interfaceMap[to] || this.interfaceMap[config.SCW]) {
+        let methodInfo = decodeMethod(to, params[0].data, this.interfaceMap);
 
         // Check if the Smart Contract Wallet is registered on dashboard
         if (!methodInfo) {
-          methodInfo = decodeMethod(config.SCW, payload.params[0].data, interfaceMap);
+          methodInfo = decodeMethod(config.SCW, params[0].data, this.interfaceMap);
         }
         if (!methodInfo) {
           const error = {
@@ -39,8 +39,8 @@ export const handleSendTransaction = async (
           return error;
         }
         const methodName = methodInfo.name;
-        let api = engine.dappAPIMap[to]
-          ? engine.dappAPIMap[to][methodName]
+        let api = this.dappApiMap[to]
+          ? this.dappApiMap[to][methodName]
           : undefined;
           // Information we get here is contractAddress, methodName, methodType, ApiId
         let metaTxApproach;
@@ -49,40 +49,39 @@ export const handleSendTransaction = async (
           customDomainVersion;
         let signTypedDataType;
         if (!api) {
-          api = engine.dappAPIMap[config.SCW]
-            ? engine.dappAPIMap[config.SCW][methodName]
+          api = this.dappApiMap[config.SCW]
+            ? this.dappApiMap[config.SCW][methodName]
             : undefined;
-          metaTxApproach = smartContractMetaTransactionMap[config.SCW];
+          metaTxApproach = this.smartContractMetaTransactionMap[config.SCW];
         } else {
-          const contractAddr = api.contractAddress.toLowerCase();
-          metaTxApproach = smartContractMetaTransactionMap[contractAddr];
+          const contractAddress = api.contractAddress.toLowerCase();
+          metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
         }
 
         // Sanitise gas limit here. big number / hex / number -> hex
-        let gasLimit = payload.params[0].gas || payload.params[0].gasLimit;
+        let gasLimit = params[0].gas || params[0].gasLimit;
         if (gasLimit) {
           gasLimit = ethers.BigNumber.from(gasLimit.toString()).toHexString();
         }
-        let { txGas } = payload.params[0];
-        const { signatureType } = payload.params[0];
-        if (payload.params[0].batchId) {
-          customBatchId = Number(payload.params[0].batchId);
+        let { txGas } = params[0];
+        const { signatureType } = params[0];
+        if (params[0].batchId) {
+          customBatchId = Number(params[0].batchId);
         }
 
-        if (payload.params[0].domainName) {
-          customDomainName = payload.params[0].domainName;
+        if (params[0].domainName) {
+          customDomainName = params[0].domainName;
         }
 
-        if (payload.params[0].domainVersion) {
-          customDomainVersion = payload.params[0].domainVersion;
+        if (params[0].domainVersion) {
+          customDomainVersion = params[0].domainVersion;
         }
 
-        if (payload.params[0].signTypedDataType) {
-          signTypedDataType = payload.params[0].signTypedDataType;
+        if (params[0].signTypedDataType) {
+          signTypedDataType = params[0].signTypedDataType;
         }
 
-        logMessage(payload.params[0]);
-        logMessage(api);
+        logMessage(params[0]);
         logMessage(`gas limit : ${gasLimit}`);
         if (txGas) {
           logMessage(`tx gas supplied : ${txGas}`);
@@ -90,8 +89,8 @@ export const handleSendTransaction = async (
 
         if (!api) {
           logMessage(`API not found for method ${methodName}`);
-          logMessage(`Strict mode ${engine.strictMode}`);
-          if (engine.strictMode) {
+          logMessage(`Strict mode ${this.strictMode}`);
+          if (this.strictMode) {
             const error = {
               code: RESPONSE_CODES.API_NOT_FOUND,
               message: `Biconomy strict mode is on. No registered API found for method ${methodName}. Please register API from developer dashboard.`,
@@ -124,20 +123,20 @@ export const handleSendTransaction = async (
           gasLimitNum;
 
         if (api.url === NATIVE_META_TX_URL) {
-          if (metaTxApproach === engine.TRUSTED_FORWARDER) {
+          if (metaTxApproach === this.TRUSTED_FORWARDER) {
             logMessage('Smart contract is configured to use Trusted Forwarder as meta transaction type');
-            forwardedData = payload.params[0].data;
+            forwardedData = params[0].data;
 
-            const signatureFromPayload = payload.params[0].signature;
+            const signatureFromPayload = params[0].signature;
             // Check if txGas is present, if not calculate gas limit for txGas
 
             if (!txGas || parseInt(txGas, 10) === 0) {
-              const contractABI = smartContractMap[to];
+              const contractAbi = this.smartContractMap[to];
               if (contractABI) {
                 const contract = new ethers.Contract(
                   to,
-                  JSON.parse(contractABI),
-                  engine.ethersProvider,
+                  JSON.parse(contractAbi),
+                  this.ethersProvider,
                 );
                 txGas = await contract.estimateGas[methodInfo.signature](
                   ...methodInfo.args,
@@ -166,22 +165,22 @@ export const handleSendTransaction = async (
 
             // TODO
             // get the new smartContractTrustedForwarderMap and set it on the instance
-            const forwarderToAttach = await findTheRightForwarder(engine, to);
+            const forwarderToAttach = await findTheRightForwarder(this, to);
 
             const { request } = await buildForwardTxRequest(
               account,
               to,
               gasLimitNum, // txGas
               forwardedData,
-              biconomyForwarder.attach(forwarderToAttach),
+              this.biconomyForwarder.attach(forwarderToAttach),
               customBatchId,
             );
             logMessage(JSON.stringify(request));
 
             paramArray.push(request);
 
-            forwarderDomainData.verifyingContract = forwarderToAttach;
-            const domainDataToUse = forwarderDomainDetails[forwarderToAttach];
+            this.forwarderDomainData.verifyingContract = forwarderToAttach;
+            const domainDataToUse = this.forwarderDomainDetails[forwarderToAttach];
 
             if (customDomainName) {
               domainDataToUse.name = customDomainName.toString();
@@ -191,7 +190,7 @@ export const handleSendTransaction = async (
               domainDataToUse.version = customDomainVersion.toString();
             }
 
-            if (signatureType && signatureType === engine.EIP712_SIGN) {
+            if (signatureType && signatureType === this.EIP712_SIGN) {
               logMessage('EIP712 signature flow');
               // Update the verifyingContract field of domain data based on the current request
               const domainSeparator = getDomainSeperator(
@@ -206,7 +205,7 @@ export const handleSendTransaction = async (
                 logMessage(`EIP712 signature from payload is ${signatureEIP712}`);
               } else {
                 signatureEIP712 = await getSignatureEIP712(
-                  engine,
+                  this,
                   account,
                   request,
                   forwarderToAttach,
@@ -224,7 +223,7 @@ export const handleSendTransaction = async (
                 logMessage(`Personal signature from payload is ${signaturePersonal}`);
               } else {
                 signaturePersonal = await getSignaturePersonal(
-                  engine,
+                  this,
                   request,
                 );
                 logMessage(`Personal signature is ${signaturePersonal}`);
@@ -242,11 +241,10 @@ export const handleSendTransaction = async (
               params: paramArray,
               to,
               gasLimit,
+              signatureType: signatureType && signatureType === this.EIP712_SIGN
+                ? this.EIP712_SIGN : this.PERSONAL_SIGN,
             };
 
-            if (signatureType && signatureType === engine.EIP712_SIGN) {
-              data.signatureType = engine.EIP712_SIGN;
-            }
             return {
               code: RESPONSE_CODES.SUCCESS_RESPONSE,
               message: 'Success',
@@ -283,7 +281,7 @@ export const handleSendTransaction = async (
         );
         return error;
       }
-      if (engine.strictMode) {
+      if (this.strictMode) {
         const error = formatMessage(
           RESPONSE_CODES.BICONOMY_NOT_INITIALIZED,
           'Decoders not initialized properly in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard',
@@ -307,4 +305,4 @@ export const handleSendTransaction = async (
   } catch (error) {
     return error;
   }
-};
+}

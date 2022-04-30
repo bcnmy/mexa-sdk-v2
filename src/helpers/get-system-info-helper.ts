@@ -1,11 +1,12 @@
 import { ethers } from 'ethers';
-import { DappDataForSystemInfoType, IBiconomy } from '../common/types';
 import {
   config, RESPONSE_CODES,
 } from '../config';
 import { formatMessage, getFetchOptions, logMessage } from '../utils';
 
 import { biconomyForwarderAbi } from '../abis';
+
+import type { Biconomy } from '..';
 
 const domainData = {
   name: config.eip712DomainName,
@@ -14,15 +15,14 @@ const domainData = {
   chainId: 0,
 };
 
-const getDAppInfo = async (
-  apiKey: string,
+const getDappInfo = async (
   dappId: string,
   strictMode: boolean,
 ) => {
   try {
     let smartContractMetaTransactionMap: any; let interfaceMap: any; let smartContractMap: any;
     const { getSmartContractsPerDappApiUrl } = config;
-    fetch(getSmartContractsPerDappApiUrl, getFetchOptions('GET', apiKey))
+    fetch(getSmartContractsPerDappApiUrl, getFetchOptions('GET', dappId))
       .then((response) => response.json())
       // eslint-disable-next-line consistent-return
       .then((result) => {
@@ -82,23 +82,18 @@ const getDAppInfo = async (
   }
 };
 
-export const getSystemInfo = async (
-  _engine: IBiconomy,
-  dappDataForSystemInfo: DappDataForSystemInfoType,
-) => {
-  const {
-    providerNetworkId, dappNetworkId, dappId, apiKey, strictMode,
-  } = dappDataForSystemInfo;
-  const engine = _engine;
-
+export async function getSystemInfo(
+  this: Biconomy,
+  providerNetworkId: number,
+) {
   logMessage(
     `Current provider network id: ${providerNetworkId}`,
   );
 
-  if (providerNetworkId !== dappNetworkId) {
+  if (providerNetworkId !== this.networkId) {
     const error = formatMessage(
       RESPONSE_CODES.NETWORK_ID_MISMATCH,
-      `Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${dappNetworkId}`,
+      `Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`,
     );
     return error;
   }
@@ -109,47 +104,46 @@ export const getSystemInfo = async (
     .then((response) => response.json())
     .then(async (systemInfo) => {
       if (systemInfo) {
-        engine.domainType = systemInfo.domainType;
-        engine.forwarderDomainType = systemInfo.forwarderDomainType;
-        engine.metaInfoType = systemInfo.metaInfoType;
-        engine.relayerPaymentType = systemInfo.relayerPaymentType;
-        engine.metaTransactionType = systemInfo.metaTransactionType;
-        engine.loginDomainType = systemInfo.loginDomainType;
-        engine.loginMessageType = systemInfo.loginMessageType;
-        engine.loginDomainData = systemInfo.loginDomainData;
-        engine.forwardRequestType = systemInfo.forwardRequestType;
-        engine.forwarderDomainData = systemInfo.forwarderDomainData;
-        engine.forwarderDomainDetails = systemInfo.forwarderDomainDetails;
-        engine.trustedForwarderOverhead = systemInfo.overHeadEIP712Sign;
-        engine.forwarderAddress = systemInfo.biconomyForwarderAddress;
-        engine.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
-        engine.TRUSTED_FORWARDER = systemInfo.trustedForwarderMetaTransaction;
-        engine.DEFAULT = systemInfo.defaultMetaTransaction;
-        engine.EIP712_SIGN = systemInfo.eip712Sign;
-        engine.PERSONAL_SIGN = systemInfo.personalSign;
+        this.domainType = systemInfo.domainType;
+        this.forwarderDomainType = systemInfo.forwarderDomainType;
+        this.metaInfoType = systemInfo.metaInfoType;
+        this.relayerPaymentType = systemInfo.relayerPaymentType;
+        this.metaTransactionType = systemInfo.metaTransactionType;
+        this.loginDomainType = systemInfo.loginDomainType;
+        this.loginMessageType = systemInfo.loginMessageType;
+        this.loginDomainData = systemInfo.loginDomainData;
+        this.forwardRequestType = systemInfo.forwardRequestType;
+        this.forwarderDomainData = systemInfo.forwarderDomainData;
+        this.forwarderDomainDetails = systemInfo.forwarderDomainDetails;
+        this.trustedForwarderOverhead = systemInfo.overHeadEIP712Sign;
+        this.forwarderAddress = systemInfo.biconomyForwarderAddress;
+        this.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
+        this.TRUSTED_FORWARDER = systemInfo.trustedForwarderMetaTransaction;
+        this.DEFAULT = systemInfo.defaultMetaTransaction;
+        this.EIP712_SIGN = systemInfo.eip712Sign;
+        this.PERSONAL_SIGN = systemInfo.personalSign;
 
         if (systemInfo.relayHubAddress) {
           domainData.verifyingContract = systemInfo.relayHubAddress;
         }
 
-        if (engine.forwarderAddress && engine.forwarderAddress !== '') {
-          engine.biconomyForwarder = new ethers.Contract(
-            engine.forwarderAddress,
+        if (this.forwarderAddress && this.forwarderAddress !== '') {
+          this.biconomyForwarder = new ethers.Contract(
+            this.forwarderAddress,
             biconomyForwarderAbi,
-            engine.ethersProvider,
+            this.ethersProvider,
           );
         }
 
-        const dappInfo = await getDAppInfo(
-          apiKey,
-          dappId,
-          strictMode,
+        const dappInfo = await getDsppInfo(
+          this.dappId,
+          this.strictMode,
         );
 
         if (dappInfo) {
-          engine.smartContractMap = dappInfo.smartContractMap;
-          engine.smartContractMetaTransactionMap = dappInfo.smartContractMetaTransactionMap;
-          engine.interfaceMap = dappInfo.interfaceMap;
+          this.smartContractMap = dappInfo.smartContractMap;
+          this.smartContractMetaTransactionMap = dappInfo.smartContractMetaTransactionMap;
+          this.interfaceMap = dappInfo.interfaceMap;
         }
       }
       const error = formatMessage(
@@ -158,10 +152,4 @@ export const getSystemInfo = async (
       );
       return error;
     });
-
-  return {
-    code: RESPONSE_CODES.SUCCESS_RESPONSE,
-    message: 'Success',
-    engine,
-  };
-};
+}

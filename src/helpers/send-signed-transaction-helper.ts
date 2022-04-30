@@ -1,7 +1,8 @@
 import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
-import { IBiconomy } from '../common/types';
-import { config, EVENTS, RESPONSE_CODES } from '../config';
+import type { Biconomy } from '..';
+import { SendSingedTransactionParamsType } from '../common/types';
+import { config, RESPONSE_CODES } from '../config';
 import {
   decodeMethod, formatMessage, logMessage,
 } from '../utils';
@@ -16,16 +17,16 @@ import { sendTransaction } from './send-transaction-helper';
  * In case of contract based meta transaction, payload contains rawTransaction and signature wrapped
  * in a json object.
  *
- * @param {Object} engine Reference to this SDK instance
+ * @param {Object} this Reference to this SDK instance
  * @param {Object} payload Payload data
  */
-export const sendSignedTransaction = async (
-  engine: IBiconomy,
-  sendSignedTransactionParams,
-) => {
-  const { interfaceMap, params, smartContractMetaTransactionMap } = smartContractMetaTransactionMap;
-  if (payload && payload.params[0]) {
-    const data = payload.params[0];
+export async function sendSignedTransaction(
+  this: Biconomy,
+  sendSignedTransactionParams: SendSingedTransactionParamsType,
+) {
+  const { method, params, fallback } = sendSignedTransactionParams;
+  if (params && params[0]) {
+    const data = params[0];
     let rawTransaction;
     let signature;
     let request;
@@ -50,11 +51,11 @@ export const sendSignedTransaction = async (
 
       if (decodedTx.to && decodedTx.data && decodedTx.value) {
         const to = decodedTx.to.toLowerCase();
-        let methodInfo = decodeMethod(to, decodedTx.data, interfaceMap);
+        let methodInfo = decodeMethod(to, decodedTx.data, this.interfaceMap);
         if (!methodInfo) {
-          methodInfo = decodeMethod(config.SCW, decodedTx.data, interfaceMap);
+          methodInfo = decodeMethod(config.SCW, decodedTx.data, this.interfaceMap);
           if (!methodInfo) {
-            if (engine.strictMode) {
+            if (this.strictMode) {
               const error = formatMessage(
                 RESPONSE_CODES.DASHBOARD_DATA_MISMATCH,
                 `No smart contract wallet or smart contract registered on dashboard with address (${decodedTx.to})`,
@@ -65,34 +66,34 @@ export const sendSignedTransaction = async (
               'Strict mode is off so falling back to default provider for handling transaction',
             );
             if (typeof data === 'object' && data.rawTransaction) {
-              payload.params = [data.rawTransaction];
+              params = [data.rawTransaction];
             }
 
             try {
-              return await callDefaultProvider(engine, payload, `No smart contract wallet or smart contract registered on dashboard with address (${decodedTx.to})`);
+              return await callDefaultProvider(this, payload, `No smart contract wallet or smart contract registered on dashboard with address (${decodedTx.to})`);
             } catch (error) {
               return error;
             }
           }
         }
         const methodName = methodInfo.name;
-        let api = engine.dappApiMap[to]
-          ? engine.dappApiMap[to][methodName]
+        let api = this.dappApiMap[to]
+          ? this.dappApiMap[to][methodName]
           : undefined;
         let metaTxApproach;
         if (!api) {
-          api = engine.dappApiMap[config.SCW]
-            ? engine.dappApiMap[config.SCW][methodName]
+          api = this.dappApiMap[config.SCW]
+            ? this.dappApiMap[config.SCW][methodName]
             : undefined;
-          metaTxApproach = smartContractMetaTransactionMap[config.SCW];
+          metaTxApproach = this.smartContractMetaTransactionMap[config.SCW];
         } else {
           const contractAddr = api.contractAddress.toLowerCase();
-          metaTxApproach = smartContractMetaTransactionMap[contractAddr];
+          metaTxApproach = this.smartContractMetaTransactionMap[contractAddr];
         }
         if (!api) {
           logMessage(`API not found for method ${methodName}`);
-          logMessage(`Strict mode ${engine.strictMode}`);
-          if (engine.strictMode) {
+          logMessage(`Strict mode ${this.strictMode}`);
+          if (this.strictMode) {
             const error = formatMessage(
               RESPONSE_CODES.API_NOT_FOUND,
               `Biconomy strict mode is on. No registered API found for method ${methodName}. Please register API from developer dashboard.`,
@@ -103,10 +104,10 @@ export const sendSignedTransaction = async (
             'Falling back to default provider as strict mode is false in biconomy',
           );
           if (typeof data === 'object' && data.rawTransaction) {
-            payload.params = [data.rawTransaction];
+            params = [data.rawTransaction];
           }
           try {
-            return await callDefaultProvider(engine, payload, `Current provider can not sign transactions. Make sure to register method ${methodName} on Biconomy Dashboard`);
+            return await callDefaultProvider(this, payload, `Current provider can not sign transactions. Make sure to register method ${methodName} on Biconomy Dashboard`);
           } catch (error) {
             return error;
           }
@@ -137,21 +138,17 @@ export const sendSignedTransaction = async (
            * send API call with appropriate parameters based on signature type
            *
            */
-        let forwardedData; let
-          gasLimitNum;
+        let gasLimitNum;
         let { gasLimit } = decodedTx;
         if (api.url === config.metaTxUrl) {
-          if (metaTxApproach !== engine.DEFAULT) {
-            // forwardedData = payload.params[0].data;
-            forwardedData = decodedTx.data;
-
-            if (!gasLimit || parseInt(gasLimit) == 0) {
-              const contractABI = smartContractMap[to];
+          if (metaTxApproach !== this.DEFAULT) {
+            if (!gasLimit || parseInt(gasLimit, 10) === 0) {
+              const contractABI = this.smartContractMap[to];
               if (contractABI) {
                 const contract = new ethers.Contract(
                   to,
                   JSON.parse(contractABI),
-                  engine.ethersProvider,
+                  this.ethersProvider,
                 );
                 gasLimit = await contract.estimateGas[methodInfo.signature](
                   ...methodInfo.args,
@@ -173,11 +170,12 @@ export const sendSignedTransaction = async (
 
             paramArray.push(request);
 
-            const forwarderToUse = await findTheRightForwarder(engine, to);
+            const forwarderToUse = await findTheRightForwarder(this, to);
+            this.smartContractTrustedForwarderMap[to] = await findTheRightForwarder(this, to);
 
             // Update the verifyingContract in domain data
-            forwarderDomainData.verifyingContract = forwarderToUse;
-            const domainDataToUse = forwarderDomainDetails[forwarderToUse];
+            this.forwarderDomainData.verifyingContract = forwarderToUse;
+            const domainDataToUse = this.forwarderDomainDetails[forwarderToUse];
 
             if (customDomainName) {
               domainDataToUse.name = customDomainName.toString();
@@ -188,7 +186,7 @@ export const sendSignedTransaction = async (
             }
 
             // Update the verifyingContract field of domain data based on the current request
-            if (signatureType && signatureType === engine.EIP712_SIGN) {
+            if (signatureType && signatureType === this.EIP712_SIGN) {
               const domainSeparator = getDomainSeperator(
                 domainDataToUse,
               );
@@ -203,10 +201,10 @@ export const sendSignedTransaction = async (
               apiId: api.id,
               params: paramArray,
               to,
-              signatureType: signatureType ? engine.EIP712_SIGN : engine.PERSONAL_SIGN,
+              signatureType: signatureType ? this.EIP712_SIGN : this.PERSONAL_SIGN,
             };
 
-            await sendTransaction(engine, account, api, data, end);
+            await sendTransaction(this, account, data);
           } else {
             paramArray.push(...methodInfo.args);
 
@@ -218,7 +216,7 @@ export const sendSignedTransaction = async (
               to: decodedTx.to.toLowerCase(),
             };
 
-            await sendTransaction(engine, account, api, data, end);
+            await sendTransaction(this, account, data);
           }
         } else if (signature) {
           const relayerPayment = {
@@ -241,30 +239,28 @@ export const sendSignedTransaction = async (
             relayerPayment,
           };
 
-          sendTransaction(engine, account, api, data, end);
+          sendTransaction(this, account, data);
         } else {
           const error = formatMessage(
             RESPONSE_CODES.INVALID_PAYLOAD,
             `Invalid payload data ${JSON.stringify(
-              payload.params[0],
+              params[0],
             )}. message and signature are required in param object`,
           );
-          eventEmitter.emit(EVENTS.BICONOMY_ERROR, error);
-          end(error);
+          return error;
         }
       } else {
         const error = formatMessage(
           RESPONSE_CODES.INVALID_PAYLOAD,
           'Not able to deode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.',
         );
-        eventEmitter.emit(EVENTS.BICONOMY_ERROR, error);
-        end(error);
+        return error;
       }
     } else {
       const error = formatMessage(
         RESPONSE_CODES.INVALID_PAYLOAD,
         `Invalid payload data ${JSON.stringify(
-          payload.params[0],
+          params[0],
         )}.rawTransaction is required in param object`,
       );
       return error;
@@ -273,9 +269,9 @@ export const sendSignedTransaction = async (
     const error = formatMessage(
       RESPONSE_CODES.INVALID_PAYLOAD,
       `Invalid payload data ${JSON.stringify(
-        payload.params[0],
+        params,
       )}. Non empty Array expected in params key`,
     );
     return error;
   }
-};
+}

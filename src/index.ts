@@ -7,8 +7,6 @@ import { ethers } from 'ethers';
 import fetch from 'node-fetch';
 import {
   DappApiMapType,
-  DappDataForSystemInfoType,
-  IBiconomy,
   InterfaceMapType,
   JsonRpcCallback,
   JsonRpcRequest,
@@ -25,7 +23,7 @@ import { sendSignedTransaction } from './helpers/send-signed-transaction-helper'
 import { getSystemInfo } from './helpers/get-system-info-helper';
 import { sendTransaction } from './helpers/send-transaction-helper';
 
-export class Biconomy extends EventEmitter implements IBiconomy {
+export class Biconomy extends EventEmitter {
   apiKey: string;
 
   private externalProvider: ExternalProvider;
@@ -57,12 +55,11 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
   dappId: string = '';
 
-  getSystemInfo: (
-    _engine: IBiconomy,
-    dappDataForSystemInfo: DappDataForSystemInfoType
-  ) => Promise<
-  { code: string; message: string; } |
-  { code: string; message: string; engine: IBiconomy; }>;
+  getSystemInfo = getSystemInfo;
+
+  handleSendTransaction = handleSendTransaction;
+
+  sendSignedTransaction = sendSignedTransaction;
 
   constructor(provider: ExternalProvider, options: { apiKey: string; strictMode: boolean }) {
     super();
@@ -71,7 +68,6 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     this.strictMode = options.strictMode || false;
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
-    this.getSystemInfo = getSystemInfo;
 
     if (isEthersProvider(provider)) {
       this.ethersProvider = provider;
@@ -136,6 +132,19 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
   async handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback) {
     const fallback = () => this.externalProvider.send?.(payload, callback);
+    const { method, params } = payload;
+    try {
+      switch (method) {
+        case 'eth_sendTransaction':
+          return await this.handleSendTransaction({ method, params, fallback });
+        case 'eth_sendRawTransaction':
+          return await this.sendSignedTransaction({ method, params, fallback });
+        default:
+          return fallback();
+      }
+    } catch (e) {
+      return fallback();
+    }
   }
 
   async handleRpcSendType2(method: string, params?: Array<unknown>) {
@@ -144,6 +153,18 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
     // @ts-ignore
     const fallback = () => this.externalProvider.send?.(method, params);
+    try {
+      switch (method) {
+        case 'eth_sendTransaction':
+          return await this.handleSendTransaction({ method, params, fallback });
+        case 'eth_sendRawTransaction':
+          return await this.sendSignedTransaction({ method, params, fallback });
+        default:
+          return fallback();
+      }
+    } catch (e) {
+      return fallback();
+    }
   }
 
   async handleRpcSendType3(payload: JsonRpcRequest) {
@@ -152,6 +173,19 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
     // @ts-ignore
     const fallback = () => this.externalProvider.send?.(payload);
+    const { method, params } = payload;
+    try {
+      switch (method) {
+        case 'eth_sendTransaction':
+          return await this.handleSendTransaction({ method, params, fallback });
+        case 'eth_sendRawTransaction':
+          return await this.sendSignedTransaction({ method, params, fallback });
+        default:
+          return fallback();
+      }
+    } catch (e) {
+      return fallback();
+    }
   }
 
   handleRpcSend(...args: any[]) {
@@ -186,8 +220,22 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     return this.handleRpcSendType1(args[0] as JsonRpcRequest, args[1] as JsonRpcCallback);
   }
 
-  handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback) {
+  async handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback) {
     const fallback = () => this.externalProvider.sendAsync?.(payload, callback);
+
+    const { method, params } = payload;
+    try {
+      switch (method) {
+        case 'eth_sendTransaction':
+          return await this.handleSendTransaction({ method, params, fallback});
+        case 'eth_sendRawTransaction':
+          return await this.sendSignedTransaction({ method, params, fallback });
+        default:
+          return fallback();
+      }
+    } catch (e) {
+      return fallback();
+    }
   }
 
   handleRpcRequest({ method, params } : { method: string, params: string[] }) {
@@ -196,9 +244,9 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this._handleSendTransaction(method, params, fallback);
+          return this.handleSendTransaction({ method, params, fallback });
         case 'eth_sendRawTransaction':
-          return this._sendSignedTransaction(method, params, fallback);
+          return this.sendSignedTransaction({ method, params, fallback });
         default:
           return fallback();
       }
@@ -237,13 +285,7 @@ export class Biconomy extends EventEmitter implements IBiconomy {
             if (providerNetworkId) {
               providerNetworkId = parseInt(providerNetworkId.toString(), 10);
               // TODO
-              this.getSystemInfo(this, {
-                providerNetworkId,
-                dappNetworkId: this.networkId,
-                dappId: this.dappId,
-                apiKey,
-                strictMode: this.strictMode,
-              });
+              this.getSystemInfo(providerNetworkId);
             } else {
               return this.emit(
                 EVENTS.BICONOMY_ERROR,
@@ -289,28 +331,6 @@ export class Biconomy extends EventEmitter implements IBiconomy {
         error,
       );
     }
-  }
-
-  private async _handleSendTransaction(method: any, params: any) {
-    const handleSendTransactionParams = {
-      payload,
-      interfaceMap: this.interfaceMap,
-      smartContractMetaTransactionMap: this.smartContractMetaTransactionMap,
-      smartContractMap: this.smartContractMap,
-    };
-    // Update properties based on return value
-    const handleSendTransactionData = handleSendTransaction(this, handleSendTransactionParams);
-    // call sendTransaction
-    const sendTransactionData = sendTransaction(this);
-    return sendTransactionData;
-  }
-
-  private async _sendSignedTransaction(method: any, params: any) {
-    const sendSignedTransactionParams = {
-      method,
-      params,
-    };
-    return sendSignedTransaction(this, sendSignedTransactionParams);
   }
 
   private setSmartContractMetaTransactionMap(newSmartContractMetatransactionMap: any) {

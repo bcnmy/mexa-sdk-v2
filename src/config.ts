@@ -32,6 +32,12 @@ export const config = {
   eip712DomainName: 'Biconomy Meta Transaction',
   eip712VerifyingContract: '0x3457dC2A8Ff1d3FcC45eAd532CA1740f5c477160',
   socketClientEndpoint: 'wss://gasless-staging-wss.biconomy.io/connection/websocket',
+  DEFAULT_RELAYER_PAYMENT_TOKEN_ADDRESS: '0x0000000000000000000000000000000000000000',
+  DEFAULT_RELAYER_PAYMENT_AMOUNT: 0,
+  ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
+  NONCE_BATCH_ID: 0,
+  EXPIRY: 0,
+  BASE_GAS: 0,
 };
 
 export const EVENTS = {

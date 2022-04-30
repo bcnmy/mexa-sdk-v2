@@ -1,4 +1,3 @@
-import { ExternalProvider } from '@ethersproject/providers';
 import { Types } from 'mongoose';
 import { ethers } from 'ethers';
 
@@ -36,54 +35,14 @@ export type SmartContractTrustedForwarderMapType = {
   [key: string]: string
 };
 
-export interface IBiconomy {
-  forwarderDomainType: any;
-  metaInfoType: any;
-  relayerPaymentType: any;
-  metaTransactionType: any;
-  loginDomainType: any;
-  loginMessageType: any;
-  loginDomainData: any;
-  forwardRequestType: any;
-  forwarderDomainData: any;
-  forwarderDomainDetails: any;
-  trustedForwarderOverhead: any;
-  TRUSTED_FORWARDER: any;
-  DEFAULT: any;
-  EIP712_SIGN: any;
-  PERSONAL_SIGN: any;
-  biconomyForwarder: ethers.Contract;
-  domainType: any;
-  apiKey: string,
-  strictMode: boolean
-  provider: ExternalProvider
-  dappApiMap: DappApiMapType;
-  interfaceMap: InterfaceMapType
-  smartContractMap: SmartContractMapType
-  smartContractMetaTransactionMap: SmartContractMetaTransactionMapType
-  smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType,
-  dappId: string,
-  networkId: number,
-  signer: any;
-  ethersProvider: any
-  forwarderAddresses: string[],
-  forwarderAddress: string
-}
-
 export type HandleSendTransactionParamsType = {
-  payload: any,
-  interfaceMap: any
-  smartContractMetaTransactionMap: any,
-  smartContractMap: any,
+  method: string,
+  params?: Array<any>
+  fallback: () => Promise<any> | void | undefined
 };
 
-export type DappDataForSystemInfoType = {
-  providerNetworkId: number,
-  dappNetworkId: number,
-  apiKey: string,
-  dappId: string,
-  strictMode: boolean
-};
+export type SendSingedTransactionParamsType = HandleSendTransactionParamsType;
+
 export interface JsonRpcRequest {
   id: string | undefined;
   jsonrpc: '2.0';

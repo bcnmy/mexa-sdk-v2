@@ -1,10 +1,11 @@
 import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
 import { eip2771BaseAbi } from '../abis';
-import { IBiconomy } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
 import { decodeMethod, formatMessage, logMessage } from '../utils';
+import type { Biconomy } from '..';
 
+// TODO discuss if we are to expose
 export const getForwardRequestAndMessageToSign = async (
   rawTransaction,
   tokenAddress,
@@ -213,11 +214,11 @@ export const getForwardRequestAndMessageToSign = async (
 };
 
 export const buildForwardTxRequest = async (
-  account,
-  to,
-  gasLimitNum,
-  data,
-  biconomyForwarder,
+  account: string,
+  to: string,
+  gasLimitNum: number,
+  data: any,
+  biconomyForwarder: ethers.Contract,
   batchId = 0,
 ) => {
   if (!biconomyForwarder) {
@@ -227,18 +228,18 @@ export const buildForwardTxRequest = async (
   const req = {
     from: account,
     to,
-    token: ZERO_ADDRESS,
+    token: config.ZERO_ADDRESS,
     txGas: gasLimitNum,
     tokenGasPrice: '0',
     batchId,
-    batchNonce: parseInt(batchNonce),
+    batchNonce: parseInt(batchNonce, 10),
     deadline: Math.floor(Date.now() / 1000 + 3600),
     data,
   };
   return { request: req };
 };
 
-export const getDomainSeperator = (biconomyForwarderDomainData) => {
+export const getDomainSeperator = (biconomyForwarderDomainData: any) => {
   const domainSeparator = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
     'bytes32',
     'bytes32',
@@ -255,7 +256,7 @@ export const getDomainSeperator = (biconomyForwarderDomainData) => {
   return domainSeparator;
 };
 
-export const findTheRightForwarder = async (engine: IBiconomy, to: string) => {
+export const findTheRightForwarder = async (engine: Biconomy, to: string) => {
   let forwarderToUse;
   let ethersProvider;
   if (engine.smartContractTrustedForwarderMap[to]) {
@@ -296,8 +297,6 @@ export const findTheRightForwarder = async (engine: IBiconomy, to: string) => {
         logMessage(JSON.stringify(error));
       }
     }
-    // return updated map
-    smartContractTrustedForwarderMap[to] = forwarderToUse;
   }
   return forwarderToUse;
 };
