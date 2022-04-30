@@ -25,12 +25,13 @@ export const config = {
   SCW: 'SCW',
   metaEntryPointBaseUrl: '',
   metaTxUrl: '',
-  getApisPerDappUrl: '',
-  dashboardBackenUrl: '',
+  getDappDataUrl: '',
+  getSmartContractsPerDappApiUrl: '',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
   eip712DomainName: 'Biconomy Meta Transaction',
   eip712VerifyingContract: '0x3457dC2A8Ff1d3FcC45eAd532CA1740f5c477160',
+  socketClientEndpoint: 'wss://gasless-staging-wss.biconomy.io/connection/websocket',
 };
 
 export const EVENTS = {

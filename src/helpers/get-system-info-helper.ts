@@ -21,8 +21,8 @@ const getDAppInfo = async (
 ) => {
   try {
     let smartContractMetaTransactionMap: any; let interfaceMap: any; let smartContractMap: any;
-    const getDAppInfoAPI = `${config.dashboardBackenUrl}/api/v1/smart-contract`;
-    fetch(getDAppInfoAPI, getFetchOptions('GET', apiKey))
+    const { getSmartContractsPerDappApiUrl } = config;
+    fetch(getSmartContractsPerDappApiUrl, getFetchOptions('GET', apiKey))
       .then((response) => response.json())
       // eslint-disable-next-line consistent-return
       .then((result) => {
@@ -83,21 +83,13 @@ const getDAppInfo = async (
 };
 
 export const getSystemInfo = async (
-  engine: IBiconomy,
+  _engine: IBiconomy,
   dappDataForSystemInfo: DappDataForSystemInfoType,
 ) => {
   const {
     providerNetworkId, dappNetworkId, dappId, apiKey, strictMode,
   } = dappDataForSystemInfo;
-
-  let domainType; let forwarderDomainType; let metaInfoType;
-  let relayerPaymentType; let metaTransactionType;
-  let loginDomainType; let loginMessageType; let loginDomainData;
-  let forwardRequestType; let forwarderDomainData; let forwarderDomainDetails;
-  let trustedForwarderOverhead; let forwarderAddress; let forwarderAddresses;
-  let TRUSTED_FORWARDER; let DEFAULT; let EIP712_SIGN; let PERSONAL_SIGN;
-  let biconomyForwarder: any;
-  let smartContractMetaTransactionMap: any; let interfaceMap: any; let smartContractMap: any;
+  const engine = _engine;
 
   logMessage(
     `Current provider network id: ${providerNetworkId}`,
@@ -117,32 +109,32 @@ export const getSystemInfo = async (
     .then((response) => response.json())
     .then(async (systemInfo) => {
       if (systemInfo) {
-        domainType = systemInfo.domainType;
-        forwarderDomainType = systemInfo.forwarderDomainType;
-        metaInfoType = systemInfo.metaInfoType;
-        relayerPaymentType = systemInfo.relayerPaymentType;
-        metaTransactionType = systemInfo.metaTransactionType;
-        loginDomainType = systemInfo.loginDomainType;
-        loginMessageType = systemInfo.loginMessageType;
-        loginDomainData = systemInfo.loginDomainData;
-        forwardRequestType = systemInfo.forwardRequestType;
-        forwarderDomainData = systemInfo.forwarderDomainData;
-        forwarderDomainDetails = systemInfo.forwarderDomainDetails;
-        trustedForwarderOverhead = systemInfo.overHeadEIP712Sign;
-        forwarderAddress = systemInfo.biconomyForwarderAddress;
-        forwarderAddresses = systemInfo.biconomyForwarderAddresses;
-        TRUSTED_FORWARDER = systemInfo.trustedForwarderMetaTransaction;
-        DEFAULT = systemInfo.defaultMetaTransaction;
-        EIP712_SIGN = systemInfo.eip712Sign;
-        PERSONAL_SIGN = systemInfo.personalSign;
+        engine.domainType = systemInfo.domainType;
+        engine.forwarderDomainType = systemInfo.forwarderDomainType;
+        engine.metaInfoType = systemInfo.metaInfoType;
+        engine.relayerPaymentType = systemInfo.relayerPaymentType;
+        engine.metaTransactionType = systemInfo.metaTransactionType;
+        engine.loginDomainType = systemInfo.loginDomainType;
+        engine.loginMessageType = systemInfo.loginMessageType;
+        engine.loginDomainData = systemInfo.loginDomainData;
+        engine.forwardRequestType = systemInfo.forwardRequestType;
+        engine.forwarderDomainData = systemInfo.forwarderDomainData;
+        engine.forwarderDomainDetails = systemInfo.forwarderDomainDetails;
+        engine.trustedForwarderOverhead = systemInfo.overHeadEIP712Sign;
+        engine.forwarderAddress = systemInfo.biconomyForwarderAddress;
+        engine.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
+        engine.TRUSTED_FORWARDER = systemInfo.trustedForwarderMetaTransaction;
+        engine.DEFAULT = systemInfo.defaultMetaTransaction;
+        engine.EIP712_SIGN = systemInfo.eip712Sign;
+        engine.PERSONAL_SIGN = systemInfo.personalSign;
 
         if (systemInfo.relayHubAddress) {
           domainData.verifyingContract = systemInfo.relayHubAddress;
         }
 
-        if (forwarderAddress && forwarderAddress !== '') {
-          biconomyForwarder = new ethers.Contract(
-            forwarderAddress,
+        if (engine.forwarderAddress && engine.forwarderAddress !== '') {
+          engine.biconomyForwarder = new ethers.Contract(
+            engine.forwarderAddress,
             biconomyForwarderAbi,
             engine.ethersProvider,
           );
@@ -155,39 +147,10 @@ export const getSystemInfo = async (
         );
 
         if (dappInfo) {
-          smartContractMap = dappInfo.smartContractMap;
-          smartContractMetaTransactionMap = dappInfo.smartContractMetaTransactionMap;
-          interfaceMap = dappInfo.interfaceMap;
+          engine.smartContractMap = dappInfo.smartContractMap;
+          engine.smartContractMetaTransactionMap = dappInfo.smartContractMetaTransactionMap;
+          engine.interfaceMap = dappInfo.interfaceMap;
         }
-
-        return {
-          code: RESPONSE_CODES.SUCCESS_RESPONSE,
-          message: 'Success',
-          data: {
-            domainType,
-            forwarderDomainType,
-            metaInfoType,
-            relayerPaymentType,
-            metaTransactionType,
-            loginDomainType,
-            loginMessageType,
-            loginDomainData,
-            forwardRequestType,
-            forwarderDomainData,
-            forwarderDomainDetails,
-            trustedForwarderOverhead,
-            forwarderAddress,
-            forwarderAddresses,
-            TRUSTED_FORWARDER,
-            DEFAULT,
-            EIP712_SIGN,
-            PERSONAL_SIGN,
-            biconomyForwarder,
-            smartContractMetaTransactionMap,
-            interfaceMap,
-            smartContractMap,
-          },
-        };
       }
       const error = formatMessage(
         RESPONSE_CODES.INVALID_DATA,
@@ -195,4 +158,10 @@ export const getSystemInfo = async (
       );
       return error;
     });
+
+  return {
+    code: RESPONSE_CODES.SUCCESS_RESPONSE,
+    message: 'Success',
+    engine,
+  };
 };

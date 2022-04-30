@@ -4,8 +4,17 @@
 import EventEmitter from 'events';
 import { ExternalProvider } from '@ethersproject/providers';
 import { ethers } from 'ethers';
+import fetch from 'node-fetch';
 import {
-  DappDataForSystemInfoType, IBiconomy, JsonRpcCallback, JsonRpcRequest,
+  DappApiMapType,
+  DappDataForSystemInfoType,
+  IBiconomy,
+  InterfaceMapType,
+  JsonRpcCallback,
+  JsonRpcRequest,
+  SmartContractMapType,
+  SmartContractMetaTransactionMapType,
+  SmartContractTrustedForwarderMapType,
 } from './common/types';
 import {
   formatMessage, getFetchOptions, isEthersProvider, logMessage, validateOptions,
@@ -23,15 +32,15 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
   provider: ExternalProvider;
 
-  private dappApiMap = {};
+  dappApiMap: DappApiMapType = {};
 
-  private interfaceMap = {};
+  interfaceMap: InterfaceMapType = {};
 
-  private smartContractMap = {};
+  smartContractMap: SmartContractMapType = {};
 
-  private smartContractMetaTransactionMap = {};
+  smartContractMetaTransactionMap: SmartContractMetaTransactionMapType = {};
 
-  private smartContractTrustedForwarderMap = {};
+  smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType = {};
 
   strictMode = false;
 
@@ -41,10 +50,12 @@ export class Biconomy extends EventEmitter implements IBiconomy {
 
   forwarderAddress: string = '';
 
-  // Review type
+  // TODO Review type
   ethersProvider: any;
 
   networkId: number = 0;
+
+  dappId: string = '';
 
   constructor(provider: ExternalProvider, options: { apiKey: string; strictMode: boolean }) {
     super();
@@ -60,6 +71,40 @@ export class Biconomy extends EventEmitter implements IBiconomy {
       this.ethersProvider = new ethers.providers.Web3Provider(provider);
     }
   }
+
+  forwarderDomainType: any;
+
+  metaInfoType: any;
+
+  relayerPaymentType: any;
+
+  metaTransactionType: any;
+
+  loginDomainType: any;
+
+  loginMessageType: any;
+
+  loginDomainData: any;
+
+  forwardRequestType: any;
+
+  forwarderDomainData: any;
+
+  forwarderDomainDetails: any;
+
+  trustedForwarderOverhead: any;
+
+  TRUSTED_FORWARDER: any;
+
+  DEFAULT: any;
+
+  EIP712_SIGN: any;
+
+  PERSONAL_SIGN: any;
+
+  biconomyForwarder: any;
+
+  domainType: any;
 
   private proxyFactory() {
     return new Proxy(this.externalProvider, this.proxyProvider);
@@ -143,7 +188,9 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this._handleSendTransaction(method, params);
+          return this._handleSendTransaction(method, params, fallback);
+        case 'eth_sendRawTransaction':
+          return this._sendSignedTransaction(method, params, fallback);
         default:
           return fallback();
       }
@@ -163,25 +210,26 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     try {
       this.signer = await this.ethersProvider.getSigner();
       // Check current network id and dapp network id registered on dashboard
-      const getDappAPI = config.getApisPerDappUrl;
-      fetch(getDappAPI, getFetchOptions('GET', apiKey))
+      const { getDappDataUrl } = config;
+      fetch(getDappDataUrl, getFetchOptions('GET', apiKey))
         .then((response) => response.json())
         // eslint-disable-next-line consistent-return
-        .then(async (dappResponse) => {
-          logMessage(dappResponse);
-          if (dappResponse && dappResponse.dapp) {
-            const dappNetworkId = dappResponse.dapp.networkId;
-            const dappId = dappResponse.dapp._id;
+        .then(async (response) => {
+          logMessage(JSON.stringify(response));
+          // TODO Review response type
+          const dappData = (response as any).data;
+          if (dappData && dappData.dapp) {
+            this.networkId = dappData.dapp.networkId;
+            this.dappId = dappData.dapp._id;
             logMessage(
-              `Network id corresponding to dapp id ${dappId} is ${dappNetworkId}`,
+              `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
             );
 
             let providerNetworkId = await this.ethersProvider.send('eth_chainId', []);
             if (providerNetworkId) {
               providerNetworkId = parseInt(providerNetworkId.toString(), 10);
-              this._getSystemInfo({
-                providerNetworkId, dappNetworkId, apiKey, dappId,
-              });
+              // TODO
+              this.getSystemInfo = getSystemInfo;
             } else {
               return this.emit(
                 EVENTS.BICONOMY_ERROR,
@@ -192,10 +240,10 @@ export class Biconomy extends EventEmitter implements IBiconomy {
                 'Could not get network version',
               );
             }
-          } else if (dappResponse.log) {
+          } else if (dappData.error) {
             this.emit(
               EVENTS.BICONOMY_ERROR,
-              formatMessage(RESPONSE_CODES.ERROR_RESPONSE, dappResponse.log),
+              formatMessage(RESPONSE_CODES.ERROR_RESPONSE, dappData.error),
             );
           } else {
             this.emit(
@@ -229,13 +277,15 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     }
   }
 
-  private async _getSystemInfo(dappDataForSystemInfo: DappDataForSystemInfoType) {
-    this.networkId = dappDataForSystemInfo.providerNetworkId;
-    // Update properties based on return value
-    const systemInfoData = getSystemInfo(this, dappDataForSystemInfo);
-  }
+  private getSystemInfo = async (
+    dappDataForSystemInfo: DappDataForSystemInfoType,
+  ) => {
+    const engine = getSystemInfo(this, dappDataForSystemInfo);
+    // Assign values, discuss the better way
+    this = engine;
+  };
 
-  private async _handleSendTransaction(payload: any) {
+  private async _handleSendTransaction(method: any, params: any) {
     const handleSendTransactionParams = {
       payload,
       interfaceMap: this.interfaceMap,
@@ -249,7 +299,7 @@ export class Biconomy extends EventEmitter implements IBiconomy {
     return sendTransactionData;
   }
 
-  private async _sendSignedTransaction(payload: any) {
+  private async _sendSignedTransaction(mthod: any, params: any) {
     const sendSignedTransactionParams = {
       payload,
     };
