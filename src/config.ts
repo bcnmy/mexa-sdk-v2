@@ -25,11 +25,27 @@ export const config = {
   SCW: 'SCW',
   metaEntryPointBaseUrl: '',
   metaTxUrl: '',
-  getApisPerDappUrl: '',
+  getDappDataUrl: '',
+  getSmartContractsPerDappApiUrl: '',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
   eip712DomainName: 'Biconomy Meta Transaction',
   eip712VerifyingContract: '0x3457dC2A8Ff1d3FcC45eAd532CA1740f5c477160',
+  socketClientEndpoint: 'wss://gasless-staging-wss.biconomy.io/connection/websocket',
+  DEFAULT_RELAYER_PAYMENT_TOKEN_ADDRESS: '0x0000000000000000000000000000000000000000',
+  DEFAULT_RELAYER_PAYMENT_AMOUNT: 0,
+  ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
+  NONCE_BATCH_ID: 0,
+  EXPIRY: 0,
+  BASE_GAS: 0,
+};
+
+export const EVENTS = {
+  SMART_CONTRACT_DATA_READY: 'smart_contract_data_ready',
+  DAPP_API_DATA_READY: 'dapp_api_data_ready',
+  LOGIN_CONFIRMATION: 'login_confirmation',
+  BICONOMY_ERROR: 'biconomy_error',
+  HELPER_CLENTS_READY: 'permit_and_ercforwarder_clients_ready',
 };
 
 export const RESPONSE_CODES = {

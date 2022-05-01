@@ -1,6 +1,6 @@
 import ethers from 'ethers';
 import abi from 'ethereumjs-abi';
-import { Engine } from '../common/types';
+import { MetaApiType } from '../common/types';
 
 let forwarderDomainType: any;
 let forwardRequestType: any;
@@ -11,7 +11,7 @@ export function isEthersProvider(provider: any) {
   return ethers.providers.Provider.isProvider(provider);
 }
 
-export function _getEIP712ForwardMessageToSign(
+export function getEIP712ForwardMessageToSign(
   request: any,
   forwarder: any,
   domainData: any,
@@ -49,7 +49,7 @@ export function _getEIP712ForwardMessageToSign(
   return dataToSign;
 }
 
-export function _getPersonalForwardMessageToSign(request: any) {
+export function getPersonalForwardMessageToSign(request: any) {
   return abi.soliditySHA3(
     [
       'address',
@@ -75,7 +75,8 @@ export function _getPersonalForwardMessageToSign(request: any) {
     ],
   );
 }
-function getTargetProvider(engine: Engine) {
+
+function getTargetProvider(engine: MetaApiType) {
   let provider;
 
   if (engine) {
@@ -86,9 +87,10 @@ function getTargetProvider(engine: Engine) {
         // comment this out and just log
         // throw new Error(`Please pass a provider connected to a wallet that
         // can sign messages in Biconomy options.`);
-        // _logMessage(
-        //   `Please pass a provider connected to a wallet
-        // that can sign messages in Biconomy options`,);
+        logMessage(
+          `Please pass a provider connected to a wallet
+        that can sign messages in Biconomy options`,
+        );
       }
 
       provider = engine.walletProvider;
@@ -126,7 +128,7 @@ export function getSignatureParameters(signature: string): {
 
 // take parameter for chosen signature type V3 or V4
 export function getSignatureEIP712(
-  engine: Engine,
+  engine: MetaApiType,
   account: any,
   request: any,
   forwarder: any,
@@ -138,7 +140,7 @@ export function getSignatureEIP712(
   if (type === 'v3' || type === 'V3') {
     signTypedDataType = 'eth_signTypedData_v3';
   }
-  const dataToSign = _getEIP712ForwardMessageToSign(
+  const dataToSign = getEIP712ForwardMessageToSign(
     request,
     forwarder,
     domainData,
@@ -171,7 +173,7 @@ export function getSignatureEIP712(
             method: signTypedDataType,
             params: [account, dataToSign],
           },
-          (error: any, res: { result: any; }) => {
+          (error: any, res: { result: any }) => {
             if (error) {
               reject(error);
             } else {
@@ -198,8 +200,8 @@ export function getSignatureEIP712(
  * @param engine Object containing the signer, walletprovider and originalprovider
  * @param request Object containing the request parameters
  * */
-export async function getSignaturePersonal(engine: Engine, request: any) {
-  const hashToSign = _getPersonalForwardMessageToSign(request);
+export async function getSignaturePersonal(engine: MetaApiType, request: any) {
+  const hashToSign = getPersonalForwardMessageToSign(request);
   if (!engine.signer && !engine.walletProvider) {
     throw new Error(
       "Can't sign messages with current provider. Did you forget to pass walletProvider in Biconomy options?",

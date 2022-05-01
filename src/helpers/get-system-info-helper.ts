@@ -1,9 +1,12 @@
 import { ethers } from 'ethers';
-import { DappDataForSystemInfoType, IBiconomy } from '../common/types';
-import { config } from '../config';
-import { logMessage } from '../utils';
+import {
+  config, RESPONSE_CODES,
+} from '../config';
+import { formatMessage, getFetchOptions, logMessage } from '../utils';
 
 import { biconomyForwarderAbi } from '../abis';
+
+import type { Biconomy } from '..';
 
 const domainData = {
   name: config.eip712DomainName,
@@ -12,134 +15,141 @@ const domainData = {
   chainId: 0,
 };
 
-export const getSystemInfo = async (
-  engine: IBiconomy,
-  dappDataForSystemInfo: DappDataForSystemInfoType,
+const getDappInfo = async (
+  dappId: string,
+  strictMode: boolean,
 ) => {
-  const { providerNetworkId, dappNetworkId } = dappDataForSystemInfo;
+  try {
+    let smartContractMetaTransactionMap: any; let interfaceMap: any; let smartContractMap: any;
+    const { getSmartContractsPerDappApiUrl } = config;
+    fetch(getSmartContractsPerDappApiUrl, getFetchOptions('GET', dappId))
+      .then((response) => response.json())
+      // eslint-disable-next-line consistent-return
+      .then((result) => {
+        if (!result && result.flag !== 200) {
+          const error = formatMessage(
+            RESPONSE_CODES.SMART_CONTRACT_NOT_FOUND,
+            `Error getting smart contract for dappId ${dappId}`,
+          );
+          return error;
+        }
+        const smartContractList = result.smartContracts;
+        if (smartContractList && smartContractList.length > 0) {
+          smartContractList.forEach((contract: {
+            abi: string;
+            type: string;
+            metaTransactionType: any;
+            address: string;
+          }) => {
+            const contractInterface = new ethers.utils.Interface(JSON.parse(contract.abi));
+            if (contract.type === config.SCW) {
+              smartContractMetaTransactionMap[config.SCW] = contract.metaTransactionType;
+              interfaceMap[config.SCW] = contractInterface;
+              smartContractMap[config.SCW] = contract.abi;
+            } else {
+              smartContractMetaTransactionMap[
+                contract.address.toLowerCase()
+              ] = contract.metaTransactionType;
+              interfaceMap[
+                contract.address.toLowerCase()
+              ] = contractInterface;
+              smartContractMap[
+                contract.address.toLowerCase()
+              ] = contract.abi;
+            }
+          });
+          logMessage(smartContractMetaTransactionMap);
+          // _checkUserLogin(engine, dappId);
+        } else if (strictMode) {
+          const error = formatMessage(
+            RESPONSE_CODES.SMART_CONTRACT_NOT_FOUND,
+            `No smart contract registered for dappId ${dappId} on Mexa Dashboard`,
+          );
+          return error;
+        }
+      })
+      .catch((error) => error);
+    return {
+      smartContractMetaTransactionMap,
+      interfaceMap,
+      smartContractMap,
+    };
+  } catch (error) {
+    return {
+      code: RESPONSE_CODES.DAPP_NOT_FOUND,
+      error: JSON.stringify(error),
+    };
+  }
+};
 
+export async function getSystemInfo(
+  this: Biconomy,
+  providerNetworkId: number,
+) {
   logMessage(
     `Current provider network id: ${providerNetworkId}`,
   );
 
-  if (providerNetworkId !== dappNetworkId) {
-    return eventEmitter.emit(
-      EVENTS.BICONOMY_ERROR,
-      formatMessage(
-        RESPONSE_CODES.NETWORK_ID_MISMATCH,
-        `Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${dappNetworkId}`,
-      ),
+  if (providerNetworkId !== this.networkId) {
+    const error = formatMessage(
+      RESPONSE_CODES.NETWORK_ID_MISMATCH,
+      `Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`,
     );
+    return error;
   }
   domainData.chainId = providerNetworkId;
   fetch(
-    `${baseURL}/api/${config.version2}/meta-tx/systemInfo?networkId=${providerNetworkId}`,
+    `${config.metaEntryPointBaseUrl}/api/systemInfo/?networkId=${providerNetworkId}`,
   )
     .then((response) => response.json())
-    .then((systemInfo) => {
+    .then(async (systemInfo) => {
       if (systemInfo) {
-        const {
-          domainType, forwarderDomainType, metaInfoType, relayerPaymentType, metaTransactionType,
-          loginDomainType, loginMessageType, loginDomainData, forwardRequestType,
-          forwarderDomainData, forwarderDomainDetails, transferHandlerAddress,
-          erc20ForwarderAddress,
-        } = systemInfo;
-        const trustedForwarderOverhead = systemInfo.overHeadEIP712Sign;
-        const forwarderAddress = systemInfo.biconomyForwarderAddress;
-        const forwarderAddresses = systemInfo.biconomyForwarderAddresses;
-
-        const TRUSTED_FORWARDER = systemInfo.trustedForwarderMetaTransaction;
-        const DEFAULT = systemInfo.defaultMetaTransaction;
-        const EIP712_SIGN = systemInfo.eip712Sign;
-        const PERSONAL_SIGN = systemInfo.personalSign;
+        this.domainType = systemInfo.domainType;
+        this.forwarderDomainType = systemInfo.forwarderDomainType;
+        this.metaInfoType = systemInfo.metaInfoType;
+        this.relayerPaymentType = systemInfo.relayerPaymentType;
+        this.metaTransactionType = systemInfo.metaTransactionType;
+        this.loginDomainType = systemInfo.loginDomainType;
+        this.loginMessageType = systemInfo.loginMessageType;
+        this.loginDomainData = systemInfo.loginDomainData;
+        this.forwardRequestType = systemInfo.forwardRequestType;
+        this.forwarderDomainData = systemInfo.forwarderDomainData;
+        this.forwarderDomainDetails = systemInfo.forwarderDomainDetails;
+        this.trustedForwarderOverhead = systemInfo.overHeadEIP712Sign;
+        this.forwarderAddress = systemInfo.biconomyForwarderAddress;
+        this.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
+        this.TRUSTED_FORWARDER = systemInfo.trustedForwarderMetaTransaction;
+        this.DEFAULT = systemInfo.defaultMetaTransaction;
+        this.EIP712_SIGN = systemInfo.eip712Sign;
+        this.PERSONAL_SIGN = systemInfo.personalSign;
 
         if (systemInfo.relayHubAddress) {
           domainData.verifyingContract = systemInfo.relayHubAddress;
         }
 
-        if (forwarderAddress && forwarderAddress !== '') {
-          const biconomyForwarder = new ethers.Contract(
-            forwarderAddress,
+        if (this.forwarderAddress && this.forwarderAddress !== '') {
+          this.biconomyForwarder = new ethers.Contract(
+            this.forwarderAddress,
             biconomyForwarderAbi,
-            engine.ethersProvider,
+            this.ethersProvider,
           );
         }
 
-        // Get dapps smart contract data from biconomy servers
-        const getDAppInfoAPI = `${baseURL}/api/${config.version}/smart-contract`;
-        fetch(getDAppInfoAPI, getFetchOptions('GET', apiKey))
-          .then((response) => response.json())
-          .then((result) => {
-            if (!result && result.flag != 143) {
-              return eventEmitter.emit(
-                EVENTS.BICONOMY_ERROR,
-                formatMessage(
-                  RESPONSE_CODES.SMART_CONTRACT_NOT_FOUND,
-                  `Error getting smart contract for dappId ${dappId}`,
-                ),
-              );
-            }
-            const smartContractList = result.smartContracts;
-            if (
-              smartContractList
-                && smartContractList.length > 0
-            ) {
-              smartContractList.forEach((contract: {
-                abi: string;
-                type: string;
-                metaTransactionType: any;
-                address: string;
-              }) => {
-                const contractInterface = new ethers.utils.Interface(JSON.parse(contract.abi));
-                if (contract.type === config.SCW) {
-                  smartContractMetaTransactionMap[config.SCW] = contract.metaTransactionType;
-                  interfaceMap[config.SCW] = contractInterface;
-                  smartContractMap[config.SCW] = contract.abi;
-                } else {
-                  smartContractMetaTransactionMap[
-                    contract.address.toLowerCase()
-                  ] = contract.metaTransactionType;
-                  interfaceMap[
-                    contract.address.toLowerCase()
-                  ] = contractInterface;
-                  smartContractMap[
-                    contract.address.toLowerCase()
-                  ] = contract.abi;
-                }
-              });
-              logMessage(smartContractMetaTransactionMap);
-              _checkUserLogin(engine, dappId);
-            } else if (engine.strictMode) {
-              engine.status = STATUS.NO_DATA;
-              eventEmitter.emit(
-                EVENTS.BICONOMY_ERROR,
-                formatMessage(
-                  RESPONSE_CODES.SMART_CONTRACT_NOT_FOUND,
-                  `No smart contract registered for dappId ${dappId} on Mexa Dashboard`,
-                ),
-              );
-            } else {
-              _checkUserLogin(engine, dappId);
-            }
-          })
-          .catch((error) => {
-            eventEmitter.emit(
-              EVENTS.BICONOMY_ERROR,
-              formatMessage(
-                RESPONSE_CODES.ERROR_RESPONSE,
-                'Error while initializing Biconomy',
-              ),
-              error,
-            );
-          });
-      } else {
-        return eventEmitter.emit(
-          EVENTS.BICONOMY_ERROR,
-          formatMessage(
-            RESPONSE_CODES.INVALID_DATA,
-            'Could not get signature types from server. Contact Biconomy Team',
-          ),
+        const dappInfo = await getDsppInfo(
+          this.dappId,
+          this.strictMode,
         );
+
+        if (dappInfo) {
+          this.smartContractMap = dappInfo.smartContractMap;
+          this.smartContractMetaTransactionMap = dappInfo.smartContractMetaTransactionMap;
+          this.interfaceMap = dappInfo.interfaceMap;
+        }
       }
+      const error = formatMessage(
+        RESPONSE_CODES.INVALID_DATA,
+        'Could not get signature types from server. Contact Biconomy Team',
+      );
+      return error;
     });
-};
+}

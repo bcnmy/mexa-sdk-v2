@@ -1,21 +1,48 @@
-import { ExternalProvider } from '@ethersproject/providers';
-import { Signer, Wallet } from 'ethers';
+import { Types } from 'mongoose';
+import { ethers } from 'ethers';
 
-export interface IBiconomy {
-  apiKey: string,
-  strictMode: boolean
-  provider: ExternalProvider
-  dappAPIMap: any;
-  signer: any;
-  ethersProvider: any
-}
-
-export type DappDataForSystemInfoType = {
-  providerNetworkId: number,
-  dappNetworkId: number,
-  apiKey: string,
-  dappId: string,
+export type MetaApiType = {
+  apiId: string,
+  name: string,
+  dappId: Types.ObjectId,
+  contractId: Types.ObjectId,
+  method: string,
+  methodType: string,
+  apiType: string,
+  createdOn: number,
+  createdBy: Types.ObjectId,
 };
+
+export type DappApiMapType = {
+  [key: string]: {
+    [key: string]: MetaApiType
+  }
+};
+
+export type InterfaceMapType = {
+  [key: string]: ethers.utils.Interface
+};
+
+export type SmartContractMapType = {
+  [key: string]: JSON
+};
+
+export type SmartContractMetaTransactionMapType = {
+  [key: string]: string
+};
+
+export type SmartContractTrustedForwarderMapType = {
+  [key: string]: string
+};
+
+export type HandleSendTransactionParamsType = {
+  method: string,
+  params?: Array<any>
+  fallback: () => Promise<any> | void | undefined
+};
+
+export type SendSingedTransactionParamsType = HandleSendTransactionParamsType;
+
 export interface JsonRpcRequest {
   id: string | undefined;
   jsonrpc: '2.0';
@@ -29,13 +56,6 @@ export interface JsonRpcResponse {
   method: string;
   result?: unknown;
   error?: Error;
-}
-
-export interface Engine {
-  signer: Signer;
-  walletProvider: Wallet;
-  originalProvider?: any;
-  canSignMessages?: any;
 }
 
 export type JsonRpcCallback = (error: Error, response: JsonRpcResponse) => unknown;
