@@ -21,7 +21,6 @@ import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-import { sendTransaction } from './helpers/send-transaction-helper';
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -227,7 +226,7 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ method, params, fallback});
+          return await this.handleSendTransaction({ method, params, fallback });
         case 'eth_sendRawTransaction':
           return await this.sendSignedTransaction({ method, params, fallback });
         default:

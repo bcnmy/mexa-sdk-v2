@@ -1,6 +1,7 @@
 import ethers from 'ethers';
 import abi from 'ethereumjs-abi';
-import { MetaApiType } from '../common/types';
+import { Engine } from '../common/types';
+import { logMessage } from '../utils';
 
 let forwarderDomainType: any;
 let forwardRequestType: any;
@@ -76,7 +77,7 @@ export function getPersonalForwardMessageToSign(request: any) {
   );
 }
 
-function getTargetProvider(engine: MetaApiType) {
+function getTargetProvider(engine: Engine) {
   let provider;
 
   if (engine) {
@@ -128,7 +129,7 @@ export function getSignatureParameters(signature: string): {
 
 // take parameter for chosen signature type V3 or V4
 export function getSignatureEIP712(
-  engine: MetaApiType,
+  engine: Engine,
   account: any,
   request: any,
   forwarder: any,
@@ -200,7 +201,7 @@ export function getSignatureEIP712(
  * @param engine Object containing the signer, walletprovider and originalprovider
  * @param request Object containing the request parameters
  * */
-export async function getSignaturePersonal(engine: MetaApiType, request: any) {
+export async function getSignaturePersonal(engine: Engine, request: any) {
   const hashToSign = getPersonalForwardMessageToSign(request);
   if (!engine.signer && !engine.walletProvider) {
     throw new Error(

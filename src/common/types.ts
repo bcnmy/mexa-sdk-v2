@@ -1,44 +1,51 @@
 import { Types } from 'mongoose';
-import { ethers } from 'ethers';
+import { ethers, Signer, Wallet } from 'ethers';
 
 export type MetaApiType = {
-  apiId: string,
-  name: string,
-  dappId: Types.ObjectId,
-  contractId: Types.ObjectId,
-  method: string,
-  methodType: string,
-  apiType: string,
-  createdOn: number,
-  createdBy: Types.ObjectId,
+  apiId: string;
+  name: string;
+  dappId: Types.ObjectId;
+  contractId: Types.ObjectId;
+  method: string;
+  methodType: string;
+  apiType: string;
+  createdOn: number;
+  createdBy: Types.ObjectId;
 };
+
+export interface Engine {
+  signer: Signer;
+  walletProvider: Wallet;
+  originalProvider?: any;
+  canSignMessages?: any;
+}
 
 export type DappApiMapType = {
   [key: string]: {
-    [key: string]: MetaApiType
-  }
+    [key: string]: MetaApiType;
+  };
 };
 
 export type InterfaceMapType = {
-  [key: string]: ethers.utils.Interface
+  [key: string]: ethers.utils.Interface;
 };
 
 export type SmartContractMapType = {
-  [key: string]: JSON
+  [key: string]: JSON;
 };
 
 export type SmartContractMetaTransactionMapType = {
-  [key: string]: string
+  [key: string]: string;
 };
 
 export type SmartContractTrustedForwarderMapType = {
-  [key: string]: string
+  [key: string]: string;
 };
 
 export type HandleSendTransactionParamsType = {
-  method: string,
-  params?: Array<any>
-  fallback: () => Promise<any> | void | undefined
+  method: string;
+  params?: Array<any>;
+  fallback: () => Promise<any> | void | undefined;
 };
 
 export type SendSingedTransactionParamsType = HandleSendTransactionParamsType;
@@ -58,4 +65,7 @@ export interface JsonRpcResponse {
   error?: Error;
 }
 
-export type JsonRpcCallback = (error: Error, response: JsonRpcResponse) => unknown;
+export type JsonRpcCallback = (
+  error: Error,
+  response: JsonRpcResponse
+) => unknown;
