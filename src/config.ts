@@ -1,27 +1,4 @@
 export const config = {
-  forwardRequestType: [
-    { name: 'from', type: 'address' },
-    { name: 'to', type: 'address' },
-    { name: 'token', type: 'address' },
-    { name: 'txGas', type: 'uint256' },
-    { name: 'tokenGasPrice', type: 'uint256' },
-    { name: 'batchId', type: 'uint256' },
-    { name: 'batchNonce', type: 'uint256' },
-    { name: 'deadline', type: 'uint256' },
-    { name: 'data', type: 'bytes' },
-  ],
-  customForwardRequestType: [
-    { name: 'warning', type: 'string' },
-    { name: 'info', type: 'string' },
-    { name: 'action', type: 'string' },
-    { name: 'request', type: 'ERC20ForwardRequest' },
-  ],
-  domainType: [
-    { name: 'name', type: 'string' },
-    { name: 'version', type: 'string' },
-    { name: 'chainId', type: 'uint256' },
-    { name: 'verifyingContract', type: 'address' },
-  ],
   SCW: 'SCW',
   metaEntryPointBaseUrl: '',
   metaTxUrl: '',
@@ -67,6 +44,15 @@ export const RESPONSE_CODES = {
   INVALID_DATA: 'B514',
   INVALID_OPERATION: 'B515',
   WRONG_ABI: 'B516',
+  INTERFACE_MAP_UNDEFINED: 'B517',
+  DAPP_API_MAP_UNDEFINED: 'B518',
+  SMART_CONTRACT_METATRANSACTION_MAP_UNDEFINED: 'B519',
+  SMART_CONTRACT_MAP_UNDEFINED: 'B520',
+  FORWARDER_DOMAIN_DATA_UNDEFINED: 'B521',
+  FORWARDER_DOMAIN_DETAILS_UNDEFINED: 'B522',
+  BICONOMY_FORWARDER_UNDEFINED: 'B523',
+  SMART_CONTRACT_TRSUTED_FORWARDER_MAP_UNDEFINED: 'B524',
+  DAPP_ID_UNDEFINED: 'B525',
 };
 
 export const BICONOMY_RESPONSE_CODES = {

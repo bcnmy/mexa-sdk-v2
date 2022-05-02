@@ -11,6 +11,7 @@ export type MetaApiType = {
   apiType: string,
   createdOn: number,
   createdBy: Types.ObjectId,
+  contractAddress: string
 };
 
 export type DappApiMapType = {
@@ -24,7 +25,7 @@ export type InterfaceMapType = {
 };
 
 export type SmartContractMapType = {
-  [key: string]: JSON
+  [key: string]: ethers.ContractInterface
 };
 
 export type SmartContractMetaTransactionMapType = {
@@ -35,12 +36,38 @@ export type SmartContractTrustedForwarderMapType = {
   [key: string]: string
 };
 
+export type ForwarderDomainData = {
+  name: string,
+  version: string,
+  verifyingContract: string,
+  salt: string
+};
+
+export enum ContractMetaTransactionType {
+  DEFAULT = 'CUSTOM',
+  EIP2771 = 'TRUSTED_FORWARDER',
+}
+
+export type ForwardRequestType = Array<{
+  name: string,
+  type: string,
+}>;
+
+export type ForwarderDomainType = ForwardRequestType;
+
 export type HandleSendTransactionParamsType = {
   method: string,
   params?: Array<any>
   fallback: () => Promise<any> | void | undefined
 };
 
+export type FindRightForwarderParamsType = {
+  to: string,
+  smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType,
+  ethersProvider: any,
+  forwarderAddresses: Array<string>
+  forwarderAddress: string
+};
 export type SendSingedTransactionParamsType = HandleSendTransactionParamsType;
 
 export interface JsonRpcRequest {

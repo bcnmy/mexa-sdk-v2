@@ -1,3 +1,5 @@
+/* eslint-disable consistent-return */
+/* eslint-disable @typescript-eslint/no-shadow */
 import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
 import type { Biconomy } from '..';
@@ -24,7 +26,56 @@ export async function sendSignedTransaction(
   this: Biconomy,
   sendSignedTransactionParams: SendSingedTransactionParamsType,
 ) {
-  const { method, params, fallback } = sendSignedTransactionParams;
+  if (!this.interfaceMap) {
+    return {
+      error: 'Interface Map is undefined',
+      code: RESPONSE_CODES.INTERFACE_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.dappApiMap) {
+    return {
+      error: 'Dapp Api Map is undefined',
+      code: RESPONSE_CODES.DAPP_API_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.smartContractMetaTransactionMap) {
+    return {
+      error: 'Smart contract meta transaction map is undefined',
+      code: RESPONSE_CODES.SMART_CONTRACT_METATRANSACTION_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.smartContractMap) {
+    return {
+      error: 'Smart contract map is undefined',
+      code: RESPONSE_CODES.SMART_CONTRACT_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.smartContractTrustedForwarderMap) {
+    return {
+      error: 'Smart contract trusted forwarder map is undefined',
+      code: RESPONSE_CODES.SMART_CONTRACT_TRSUTED_FORWARDER_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderDomainData) {
+    return {
+      error: 'Forwarder domain data is undefined',
+      code: RESPONSE_CODES.FORWARDER_DOMAIN_DATA_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderDomainDetails) {
+    return {
+      error: 'Forwarder domain details is undefined',
+      code: RESPONSE_CODES.FORWARDER_DOMAIN_DETAILS_UNDEFINED,
+    };
+  }
+
+  let { params } = sendSignedTransactionParams;
   if (params && params[0]) {
     const data = params[0];
     let rawTransaction;
@@ -68,12 +119,6 @@ export async function sendSignedTransaction(
             if (typeof data === 'object' && data.rawTransaction) {
               params = [data.rawTransaction];
             }
-
-            try {
-              return await callDefaultProvider(this, payload, `No smart contract wallet or smart contract registered on dashboard with address (${decodedTx.to})`);
-            } catch (error) {
-              return error;
-            }
           }
         }
         const methodName = methodInfo.name;
@@ -106,11 +151,6 @@ export async function sendSignedTransaction(
           if (typeof data === 'object' && data.rawTransaction) {
             params = [data.rawTransaction];
           }
-          try {
-            return await callDefaultProvider(this, payload, `Current provider can not sign transactions. Make sure to register method ${methodName} on Biconomy Dashboard`);
-          } catch (error) {
-            return error;
-          }
         }
         logMessage('API found');
         const paramArray = [];
@@ -140,14 +180,14 @@ export async function sendSignedTransaction(
            */
         let gasLimitNum;
         let { gasLimit } = decodedTx;
-        if (api.url === config.metaTxUrl) {
-          if (metaTxApproach !== this.DEFAULT) {
+        if (api?.url === config.metaTxUrl) {
+          if (metaTxApproach !== this.defaultMetaTransaction) {
             if (!gasLimit || parseInt(gasLimit, 10) === 0) {
               const contractABI = this.smartContractMap[to];
               if (contractABI) {
                 const contract = new ethers.Contract(
                   to,
-                  JSON.parse(contractABI),
+                  contractABI,
                   this.ethersProvider,
                 );
                 gasLimit = await contract.estimateGas[methodInfo.signature](
@@ -170,12 +210,18 @@ export async function sendSignedTransaction(
 
             paramArray.push(request);
 
-            const forwarderToUse = await findTheRightForwarder(this, to);
-            this.smartContractTrustedForwarderMap[to] = await findTheRightForwarder(this, to);
+            const forwarderToUse = await findTheRightForwarder({
+              to,
+              smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
+              ethersProvider: this.ethersProvider,
+              forwarderAddresses: this.forwarderAddresses,
+              forwarderAddress: this.forwarderAddress,
+            });
+            this.smartContractTrustedForwarderMap[to] = forwarderToUse;
 
             // Update the verifyingContract in domain data
             this.forwarderDomainData.verifyingContract = forwarderToUse;
-            const domainDataToUse = this.forwarderDomainDetails[forwarderToUse];
+            const domainDataToUse = this.forwarderDomainDetails[parseInt(forwarderToUse, 10)];
 
             if (customDomainName) {
               domainDataToUse.name = customDomainName.toString();
@@ -186,7 +232,7 @@ export async function sendSignedTransaction(
             }
 
             // Update the verifyingContract field of domain data based on the current request
-            if (signatureType && signatureType === this.EIP712_SIGN) {
+            if (signatureType && signatureType === this.eip712Sign) {
               const domainSeparator = getDomainSeperator(
                 domainDataToUse,
               );
@@ -198,10 +244,10 @@ export async function sendSignedTransaction(
 
             const data = {
               from: account,
-              apiId: api.id,
+              apiId: api?.apiId,
               params: paramArray,
               to,
-              signatureType: signatureType ? this.EIP712_SIGN : this.PERSONAL_SIGN,
+              signatureType: signatureType ? this.eip712Sign : this.personalSign,
             };
 
             await sendTransaction(this, account, data);
@@ -210,7 +256,7 @@ export async function sendSignedTransaction(
 
             const data = {
               from: account,
-              apiId: api.id,
+              apiId: api?.apiId,
               params: paramArray,
               gasLimit: decodedTx.gasLimit.toString(), // verify
               to: decodedTx.to.toLowerCase(),
@@ -229,7 +275,7 @@ export async function sendSignedTransaction(
             signature,
             to,
             from: account,
-            apiId: api.id,
+            apiId: api?.apiId,
             data: decodedTx.data,
             value: ethers.utils.hexValue(decodedTx.value),
             gasLimit: decodedTx.gasLimit.toString(),

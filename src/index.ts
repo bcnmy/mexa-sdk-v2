@@ -7,6 +7,9 @@ import { ethers } from 'ethers';
 import fetch from 'node-fetch';
 import {
   DappApiMapType,
+  ForwarderDomainData,
+  ForwarderDomainType,
+  ForwardRequestType,
   InterfaceMapType,
   JsonRpcCallback,
   JsonRpcRequest,
@@ -21,7 +24,7 @@ import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-import { sendTransaction } from './helpers/send-transaction-helper';
+import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -30,19 +33,37 @@ export class Biconomy extends EventEmitter {
 
   provider: ExternalProvider;
 
-  dappApiMap: DappApiMapType = {};
+  dappApiMap?: DappApiMapType;
 
-  interfaceMap: InterfaceMapType = {};
+  interfaceMap?: InterfaceMapType;
 
-  smartContractMap: SmartContractMapType = {};
+  smartContractMap?: SmartContractMapType;
 
-  smartContractMetaTransactionMap: SmartContractMetaTransactionMapType = {};
+  smartContractMetaTransactionMap?: SmartContractMetaTransactionMapType;
 
-  smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType = {};
+  smartContractTrustedForwarderMap?: SmartContractTrustedForwarderMapType;
 
   strictMode = false;
 
   signer: any;
+
+  forwarderDomainType?: ForwarderDomainType;
+
+  defaultMetaTransaction?: string;
+
+  trustedForwarderMetaTransaction?: string;
+
+  forwardRequestType?: ForwardRequestType;
+
+  forwarderDomainData?: ForwarderDomainData;
+
+  forwarderDomainDetails?: Array<ForwarderDomainData>;
+
+  eip712Sign?: string;
+
+  personalSign?: string;
+
+  biconomyForwarder?: ethers.Contract;
 
   forwarderAddresses: string[] = [];
 
@@ -51,15 +72,17 @@ export class Biconomy extends EventEmitter {
   // TODO Review type
   ethersProvider: any;
 
-  networkId: number = 0;
+  networkId?: number;
 
-  dappId: string = '';
+  dappId?: string;
 
   getSystemInfo = getSystemInfo;
 
   handleSendTransaction = handleSendTransaction;
 
   sendSignedTransaction = sendSignedTransaction;
+
+  public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
 
   constructor(provider: ExternalProvider, options: { apiKey: string; strictMode: boolean }) {
     super();
@@ -76,45 +99,12 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  forwarderDomainType: any;
-
-  metaInfoType: any;
-
-  relayerPaymentType: any;
-
-  metaTransactionType: any;
-
-  loginDomainType: any;
-
-  loginMessageType: any;
-
-  loginDomainData: any;
-
-  forwardRequestType: any;
-
-  forwarderDomainData: any;
-
-  forwarderDomainDetails: any;
-
-  trustedForwarderOverhead: any;
-
-  TRUSTED_FORWARDER: any;
-
-  DEFAULT: any;
-
-  EIP712_SIGN: any;
-
-  PERSONAL_SIGN: any;
-
-  biconomyForwarder: any;
-
-  domainType: any;
-
   private proxyFactory() {
     return new Proxy(this.externalProvider, this.proxyProvider);
   }
 
   proxyProvider = {
+    // Difference between send and request
     get: (target: ExternalProvider, prop: string, ...args: any[]) => {
       switch (prop) {
         case 'send':
@@ -227,7 +217,7 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ method, params, fallback});
+          return await this.handleSendTransaction({ method, params, fallback });
         case 'eth_sendRawTransaction':
           return await this.sendSignedTransaction({ method, params, fallback });
         default:
