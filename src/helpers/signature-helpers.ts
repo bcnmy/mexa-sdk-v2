@@ -1,8 +1,9 @@
 import ethers from 'ethers';
 import abi from 'ethereumjs-abi';
 import { Engine } from '../common/types';
-import { logMessage } from '../utils';
+import { logger } from '../utils';
 
+const logMessage = logger.getLogger('signature-helpers');
 let forwarderDomainType: any;
 let forwardRequestType: any;
 let forwarderDomainData: any;
@@ -88,7 +89,7 @@ function getTargetProvider(engine: Engine) {
         // comment this out and just log
         // throw new Error(`Please pass a provider connected to a wallet that
         // can sign messages in Biconomy options.`);
-        logMessage(
+        logMessage.info(
           `Please pass a provider connected to a wallet
         that can sign messages in Biconomy options`,
         );

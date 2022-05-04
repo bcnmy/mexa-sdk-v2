@@ -2,8 +2,10 @@ import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
 import { eip2771BaseAbi } from '../abis';
 import { config, RESPONSE_CODES } from '../config';
-import { decodeMethod, formatMessage, logMessage } from '../utils';
+import { decodeMethod, formatMessage, logger } from '../utils';
 import type { Biconomy } from '..';
+
+const logMessage = logger.getLogger('app');
 
 // TODO discuss if we are to expose
 export const getForwardRequestAndMessageToSign = async (
@@ -36,7 +38,7 @@ export const getForwardRequestAndMessageToSign = async (
           // token address needs to be passed otherwise fees will be charged in DAI by default,
           // given DAI permit is given
           const token = tokenAddress || engine.daiTokenAddress;
-          logMessage(tokenAddress);
+          logMessage.info(tokenAddress);
           let api = engine.dappAPIMap[to]
             ? engine.dappAPIMap[to][methodName]
             : undefined;
@@ -52,7 +54,7 @@ export const getForwardRequestAndMessageToSign = async (
           }
 
           if (!api) {
-            logMessage(`API not found for method ${methodName}`);
+            logMessage.info(`API not found for method ${methodName}`);
             const error = formatMessage(
               RESPONSE_CODES.API_NOT_FOUND,
               `No API found on dashboard for called method ${methodName}`,
@@ -60,12 +62,12 @@ export const getForwardRequestAndMessageToSign = async (
             if (cb) cb(error);
             return reject(error);
           }
-          logMessage('API found');
+          logMessage.info('API found');
 
           const parsedTransaction = ethers.utils.parseTransaction(rawTransaction);
           const account = parsedTransaction.from;
 
-          logMessage(`Signer is ${account}`);
+          logMessage.info(`Signer is ${account}`);
           let { gasLimit } = decodedTx;
           let gasLimitNum;
 
@@ -82,7 +84,7 @@ export const getForwardRequestAndMessageToSign = async (
               gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
                 .add(ethers.BigNumber.from(5000))
                 .toNumber();
-              logMessage(`Gas limit number ${gasLimitNum}`);
+              logMessage.info(`Gas limit number ${gasLimitNum}`);
             }
           } else {
             gasLimitNum = ethers.BigNumber.from(gasLimit.toString()).toNumber();
@@ -137,8 +139,8 @@ export const getForwardRequestAndMessageToSign = async (
             return reject(error);
           }
 
-          logMessage('Forward Request is: ');
-          logMessage(request);
+          logMessage.info('Forward Request is: ');
+          logMessage.info(request);
 
           // Update the verifyingContract field of domain data based on the current request
           forwarderDomainData.verifyingContract = forwarderToUse;
@@ -272,8 +274,8 @@ export const findTheRightForwarder = async (engine: Biconomy, to: string) => {
     try {
       forwarder = await contract.trustedForwarder();
     } catch (error) {
-      logMessage("Could not find read method 'trustedForwarder' in the contract abi");
-      logMessage(JSON.stringify(error));
+      logMessage.error("Could not find read method 'trustedForwarder' in the contract abi");
+      logMessage.error(JSON.stringify(error));
     }
 
     for (let i = 0; i < supportedForwarders.length; i += 1) {
@@ -293,8 +295,8 @@ export const findTheRightForwarder = async (engine: Biconomy, to: string) => {
           break;
         }
       } catch (error) {
-        logMessage("Could not find read method 'isTrustedForwarder' in the contract abi");
-        logMessage(JSON.stringify(error));
+        logMessage.error("Could not find read method 'isTrustedForwarder' in the contract abi");
+        logMessage.error(JSON.stringify(error));
       }
     }
   }

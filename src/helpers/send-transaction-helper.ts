@@ -1,6 +1,8 @@
 import { IBiconomy } from '../common/types';
 import { BICONOMY_RESPONSE_CODES, config, RESPONSE_CODES } from '../config';
-import { getFetchOptions, logMessage } from '../utils';
+import { getFetchOptions, logger } from '../utils';
+
+const logMessage = logger.getLogger('app');
 
 /**
  * Method to send the transaction to biconomy server and call the callback method
@@ -17,7 +19,7 @@ export const sendTransaction = async (engine: IBiconomy, account: string, data: 
     fetch(`${metaEntryPointUrl}`, fetchOption)
       .then((response) => response.json())
       .then((result) => {
-        logMessage(result);
+        logMessage.info(result);
         if (
           !result.txHash
             && result.flag !== BICONOMY_RESPONSE_CODES.ACTION_COMPLETE
@@ -37,10 +39,10 @@ export const sendTransaction = async (engine: IBiconomy, account: string, data: 
         }
       })
       .catch((error) => {
-        logMessage(error);
+        logMessage.error(error);
       });
   } else {
-    logMessage(
+    logMessage.info(
       `Invalid arguments, provider: ${engine} account: ${account} api: ${api} data: ${data}`,
     );
   }

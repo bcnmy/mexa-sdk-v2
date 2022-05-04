@@ -15,12 +15,18 @@ import {
   SmartContractTrustedForwarderMapType,
 } from './common/types';
 import {
-  formatMessage, getFetchOptions, isEthersProvider, logMessage, validateOptions,
+  formatMessage,
+  getFetchOptions,
+  isEthersProvider,
+  validateOptions,
+  logger,
 } from './utils';
 import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
+
+const logMessage = logger.getLogger('app');
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -60,7 +66,10 @@ export class Biconomy extends EventEmitter {
 
   sendSignedTransaction = sendSignedTransaction;
 
-  constructor(provider: ExternalProvider, options: { apiKey: string; strictMode: boolean }) {
+  constructor(
+    provider: ExternalProvider,
+    options: { apiKey: string; strictMode: boolean },
+  ) {
     super();
     validateOptions(options);
     this.apiKey = options.apiKey;
@@ -207,7 +216,10 @@ export class Biconomy extends EventEmitter {
 
     if (typeof args[0] === 'string') {
       // this is type 2
-      return this.handleRpcSendType2(args[0] as string, args[1] as Array<unknown>);
+      return this.handleRpcSendType2(
+        args[0] as string,
+        args[1] as Array<unknown>,
+      );
     }
 
     if (!args[1]) {
@@ -216,7 +228,10 @@ export class Biconomy extends EventEmitter {
     }
 
     // this is type 1
-    return this.handleRpcSendType1(args[0] as JsonRpcRequest, args[1] as JsonRpcCallback);
+    return this.handleRpcSendType1(
+      args[0] as JsonRpcRequest,
+      args[1] as JsonRpcCallback,
+    );
   }
 
   async handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback) {
@@ -237,7 +252,7 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  handleRpcRequest({ method, params } : { method: string, params: string[] }) {
+  handleRpcRequest({ method, params }: { method: string; params: string[] }) {
     const fallback = () => this.externalProvider.request?.({ method, params });
 
     try {
@@ -270,17 +285,20 @@ export class Biconomy extends EventEmitter {
         .then((response) => response.json())
         // eslint-disable-next-line consistent-return
         .then(async (response) => {
-          logMessage(JSON.stringify(response));
+          logMessage.info(JSON.stringify(response));
           // TODO Review response type
           const dappData = (response as any).data;
           if (dappData && dappData.dapp) {
             this.networkId = dappData.dapp.networkId;
             this.dappId = dappData.dapp._id;
-            logMessage(
+            logMessage.info(
               `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
             );
 
-            let providerNetworkId = await this.ethersProvider.send('eth_chainId', []);
+            let providerNetworkId = await this.ethersProvider.send(
+              'eth_chainId',
+              [],
+            );
             if (providerNetworkId) {
               providerNetworkId = parseInt(providerNetworkId.toString(), 10);
               // TODO
@@ -332,11 +350,15 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  private setSmartContractMetaTransactionMap(newSmartContractMetatransactionMap: any) {
+  private setSmartContractMetaTransactionMap(
+    newSmartContractMetatransactionMap: any,
+  ) {
     this.smartContractMetaTransactionMap = newSmartContractMetatransactionMap;
   }
 
-  private setSmartContractTrustedForwarderMap(newSmartContractTrustedForwarderMap: any) {
+  private setSmartContractTrustedForwarderMap(
+    newSmartContractTrustedForwarderMap: any,
+  ) {
     this.smartContractTrustedForwarderMap = newSmartContractTrustedForwarderMap;
   }
 

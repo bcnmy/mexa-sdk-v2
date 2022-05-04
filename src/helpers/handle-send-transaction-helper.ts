@@ -1,10 +1,12 @@
 import { ethers } from 'ethers';
 import { HandleSendTransactionParamsType } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
-import { decodeMethod, formatMessage, logMessage } from '../utils';
+import { decodeMethod, formatMessage, logger } from '../utils';
 import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 import { getSignatureEIP712, getSignaturePersonal } from './signature-helpers';
 import type { Biconomy } from '..';
+
+const logMessage = logger.getLogger('handle-send-transaction-helper');
 
 /**
   * Function decodes the parameter in payload and gets the user signature using eth_signTypedData_v4
@@ -81,15 +83,15 @@ export async function handleSendTransaction(
           signTypedDataType = params[0].signTypedDataType;
         }
 
-        logMessage(params[0]);
-        logMessage(`gas limit : ${gasLimit}`);
+        logMessage.info(params[0]);
+        logMessage.info(`gas limit : ${gasLimit}`);
         if (txGas) {
-          logMessage(`tx gas supplied : ${txGas}`);
+          logMessage.info(`tx gas supplied : ${txGas}`);
         }
 
         if (!api) {
-          logMessage(`API not found for method ${methodName}`);
-          logMessage(`Strict mode ${this.strictMode}`);
+          logMessage.info(`API not found for method ${methodName}`);
+          logMessage.info(`Strict mode ${this.strictMode}`);
           if (this.strictMode) {
             const error = {
               code: RESPONSE_CODES.API_NOT_FOUND,
@@ -97,16 +99,16 @@ export async function handleSendTransaction(
             };
             return error;
           }
-          logMessage(
+          logMessage.info(
             'Falling back to default provider as strict mode is false in biconomy',
           );
           return {
             code: 1, // call fallback
           };
         }
-        logMessage('API found');
+        logMessage.info('API found');
 
-        logMessage('Getting user account');
+        logMessage.info('Getting user account');
         const account = payload.params[0].from;
 
         if (!account) {
@@ -114,9 +116,9 @@ export async function handleSendTransaction(
             message: 'Not able to get user account',
           };
         }
-        logMessage('User account fetched');
+        logMessage.info('User account fetched');
 
-        logMessage(methodInfo.args);
+        logMessage.info(methodInfo.args);
         const paramArray = [];
 
         let forwardedData; let
@@ -124,7 +126,7 @@ export async function handleSendTransaction(
 
         if (api.url === NATIVE_META_TX_URL) {
           if (metaTxApproach === this.TRUSTED_FORWARDER) {
-            logMessage('Smart contract is configured to use Trusted Forwarder as meta transaction type');
+            logMessage.info('Smart contract is configured to use Trusted Forwarder as meta transaction type');
             forwardedData = params[0].data;
 
             const signatureFromPayload = params[0].signature;
@@ -147,7 +149,7 @@ export async function handleSendTransaction(
                   .add(ethers.BigNumber.from(5000))
                   .toNumber();
 
-                logMessage(`Gas limit (txGas) calculated for method ${methodName} in SDK: ${gasLimitNum}`);
+                logMessage.info(`Gas limit (txGas) calculated for method ${methodName} in SDK: ${gasLimitNum}`);
               } else {
                 const error = formatMessage(
                   RESPONSE_CODES.SMART_CONTRACT_NOT_FOUND,
@@ -156,11 +158,11 @@ export async function handleSendTransaction(
                 return error;
               }
             } else {
-              logMessage(`txGas supplied for this Trusted Forwarder call is ${Number(txGas)}`);
+              logMessage.info(`txGas supplied for this Trusted Forwarder call is ${Number(txGas)}`);
               gasLimitNum = ethers.BigNumber.from(
                 txGas.toString(),
               ).toNumber();
-              logMessage(`gas limit number for txGas ${gasLimitNum}`);
+              logMessage.info(`gas limit number for txGas ${gasLimitNum}`);
             }
 
             // TODO
@@ -175,7 +177,7 @@ export async function handleSendTransaction(
               this.biconomyForwarder.attach(forwarderToAttach),
               customBatchId,
             );
-            logMessage(JSON.stringify(request));
+            logMessage.info(JSON.stringify(request));
 
             paramArray.push(request);
 
@@ -191,18 +193,18 @@ export async function handleSendTransaction(
             }
 
             if (signatureType && signatureType === this.EIP712_SIGN) {
-              logMessage('EIP712 signature flow');
+              logMessage.info('EIP712 signature flow');
               // Update the verifyingContract field of domain data based on the current request
               const domainSeparator = getDomainSeperator(
                 domainDataToUse,
               );
-              logMessage('Domain separator to be used:');
-              logMessage(domainSeparator);
+              logMessage.info('Domain separator to be used:');
+              logMessage.info(domainSeparator);
               paramArray.push(domainSeparator);
               let signatureEIP712;
               if (signatureFromPayload) {
                 signatureEIP712 = signatureFromPayload;
-                logMessage(`EIP712 signature from payload is ${signatureEIP712}`);
+                logMessage.info(`EIP712 signature from payload is ${signatureEIP712}`);
               } else {
                 signatureEIP712 = await getSignatureEIP712(
                   this,
@@ -212,21 +214,21 @@ export async function handleSendTransaction(
                   domainDataToUse,
                   signTypedDataType,
                 );
-                logMessage(`EIP712 signature is ${signatureEIP712}`);
+                logMessage.info(`EIP712 signature is ${signatureEIP712}`);
               }
               paramArray.push(signatureEIP712);
             } else {
-              logMessage('Personal signature flow');
+              logMessage.info('Personal signature flow');
               let signaturePersonal;
               if (signatureFromPayload) {
                 signaturePersonal = signatureFromPayload;
-                logMessage(`Personal signature from payload is ${signaturePersonal}`);
+                logMessage.info(`Personal signature from payload is ${signaturePersonal}`);
               } else {
                 signaturePersonal = await getSignaturePersonal(
                   this,
                   request,
                 );
-                logMessage(`Personal signature is ${signaturePersonal}`);
+                logMessage.info(`Personal signature is ${signaturePersonal}`);
               }
               if (signaturePersonal) {
                 paramArray.push(signaturePersonal);
@@ -288,7 +290,7 @@ export async function handleSendTransaction(
         );
         return error;
       }
-      logMessage(
+      logMessage.info(
         'Smart contract not found on dashbaord. Strict mode is off, so falling back to normal transaction mode',
       );
       return {

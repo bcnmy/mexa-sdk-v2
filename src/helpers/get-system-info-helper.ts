@@ -1,12 +1,10 @@
 import { ethers } from 'ethers';
-import {
-  config, RESPONSE_CODES,
-} from '../config';
-import { formatMessage, getFetchOptions, logMessage } from '../utils';
-
+import { config, RESPONSE_CODES } from '../config';
+import { formatMessage, getFetchOptions, logger } from '../utils';
 import { biconomyForwarderAbi } from '../abis';
-
 import type { Biconomy } from '..';
+
+const logMessage = logger.getLogger('app');
 
 const domainData = {
   name: config.eip712DomainName,
@@ -15,12 +13,11 @@ const domainData = {
   chainId: 0,
 };
 
-const getDappInfo = async (
-  dappId: string,
-  strictMode: boolean,
-) => {
+const getDappInfo = async (dappId: string, strictMode: boolean) => {
   try {
-    let smartContractMetaTransactionMap: any; let interfaceMap: any; let smartContractMap: any;
+    let smartContractMetaTransactionMap: any;
+    let interfaceMap: any;
+    let smartContractMap: any;
     const { getSmartContractsPerDappApiUrl } = config;
     fetch(getSmartContractsPerDappApiUrl, getFetchOptions('GET', dappId))
       .then((response) => response.json())
@@ -35,30 +32,30 @@ const getDappInfo = async (
         }
         const smartContractList = result.smartContracts;
         if (smartContractList && smartContractList.length > 0) {
-          smartContractList.forEach((contract: {
-            abi: string;
-            type: string;
-            metaTransactionType: any;
-            address: string;
-          }) => {
-            const contractInterface = new ethers.utils.Interface(JSON.parse(contract.abi));
-            if (contract.type === config.SCW) {
-              smartContractMetaTransactionMap[config.SCW] = contract.metaTransactionType;
-              interfaceMap[config.SCW] = contractInterface;
-              smartContractMap[config.SCW] = contract.abi;
-            } else {
-              smartContractMetaTransactionMap[
-                contract.address.toLowerCase()
-              ] = contract.metaTransactionType;
-              interfaceMap[
-                contract.address.toLowerCase()
-              ] = contractInterface;
-              smartContractMap[
-                contract.address.toLowerCase()
-              ] = contract.abi;
-            }
-          });
-          logMessage(smartContractMetaTransactionMap);
+          smartContractList.forEach(
+            (contract: {
+              abi: string;
+              type: string;
+              metaTransactionType: any;
+              address: string;
+            }) => {
+              const contractInterface = new ethers.utils.Interface(
+                JSON.parse(contract.abi),
+              );
+              if (contract.type === config.SCW) {
+                smartContractMetaTransactionMap[config.SCW] = contract.metaTransactionType;
+                interfaceMap[config.SCW] = contractInterface;
+                smartContractMap[config.SCW] = contract.abi;
+              } else {
+                smartContractMetaTransactionMap[
+                  contract.address.toLowerCase()
+                ] = contract.metaTransactionType;
+                interfaceMap[contract.address.toLowerCase()] = contractInterface;
+                smartContractMap[contract.address.toLowerCase()] = contract.abi;
+              }
+            },
+          );
+          logMessage.info(smartContractMetaTransactionMap);
           // _checkUserLogin(engine, dappId);
         } else if (strictMode) {
           const error = formatMessage(
@@ -82,13 +79,8 @@ const getDappInfo = async (
   }
 };
 
-export async function getSystemInfo(
-  this: Biconomy,
-  providerNetworkId: number,
-) {
-  logMessage(
-    `Current provider network id: ${providerNetworkId}`,
-  );
+export async function getSystemInfo(this: Biconomy, providerNetworkId: number) {
+  logMessage.info(`Current provider network id: ${providerNetworkId}`);
 
   if (providerNetworkId !== this.networkId) {
     const error = formatMessage(
@@ -135,10 +127,7 @@ export async function getSystemInfo(
           );
         }
 
-        const dappInfo = await getDsppInfo(
-          this.dappId,
-          this.strictMode,
-        );
+        const dappInfo = await getDsppInfo(this.dappId, this.strictMode);
 
         if (dappInfo) {
           this.smartContractMap = dappInfo.smartContractMap;
