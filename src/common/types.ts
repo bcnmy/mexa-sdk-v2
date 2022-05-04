@@ -1,6 +1,12 @@
 import { Types } from 'mongoose';
 import { ethers } from 'ethers';
 
+export type OptionsType = {
+  apiKey: string,
+  strictMode: boolean,
+  jsonRpcUrl?: string
+};
+
 export type MetaApiType = {
   apiId: string,
   name: string,
@@ -56,7 +62,6 @@ export type ForwardRequestType = Array<{
 export type ForwarderDomainType = ForwardRequestType;
 
 export type HandleSendTransactionParamsType = {
-  method: string,
   params?: Array<any>
   fallback: () => Promise<any> | void | undefined
 };
@@ -64,7 +69,7 @@ export type HandleSendTransactionParamsType = {
 export type FindRightForwarderParamsType = {
   to: string,
   smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType,
-  ethersProvider: any,
+  provider: any,
   forwarderAddresses: Array<string>
   forwarderAddress: string
 };

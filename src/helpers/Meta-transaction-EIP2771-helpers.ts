@@ -13,7 +13,7 @@ export const findTheRightForwarder = async (
   const {
     to,
     smartContractTrustedForwarderMap,
-    ethersProvider,
+    provider,
     forwarderAddresses,
     forwarderAddress,
   } = findTheRightForwarderParams;
@@ -21,7 +21,7 @@ export const findTheRightForwarder = async (
   if (smartContractTrustedForwarderMap[to]) {
     forwarderToUse = smartContractTrustedForwarderMap[to];
   } else {
-    const contract = new ethers.Contract(to, eip2771BaseAbi, ethersProvider);
+    const contract = new ethers.Contract(to, eip2771BaseAbi, provider);
     const supportedForwarders = forwarderAddresses;
     forwarderToUse = forwarderAddress; // default forwarder
 

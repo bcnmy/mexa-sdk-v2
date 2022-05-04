@@ -1,5 +1,4 @@
 /* eslint-disable consistent-return */
-/* eslint-disable @typescript-eslint/no-shadow */
 import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
 import type { Biconomy } from '..';
@@ -75,7 +74,21 @@ export async function sendSignedTransaction(
     };
   }
 
-  let { params } = sendSignedTransactionParams;
+  if (!this.forwarderAddresses) {
+    return {
+      error: 'Forwarder Addresses array is undefined',
+      code: RESPONSE_CODES.FORWARDER_ADDRESSES_ARRAY_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderAddress) {
+    return {
+      error: 'Forwarder Address is undefined',
+      code: RESPONSE_CODES.FORWARDER_ADDRESS_UNDEFINED,
+    };
+  }
+
+  let { params, fallback } = sendSignedTransactionParams;
   if (params && params[0]) {
     const data = params[0];
     let rawTransaction;
@@ -180,121 +193,87 @@ export async function sendSignedTransaction(
            */
         let gasLimitNum;
         let { gasLimit } = decodedTx;
-        if (api?.url === config.metaTxUrl) {
-          if (metaTxApproach !== this.defaultMetaTransaction) {
-            if (!gasLimit || parseInt(gasLimit, 10) === 0) {
-              const contractABI = this.smartContractMap[to];
-              if (contractABI) {
-                const contract = new ethers.Contract(
-                  to,
-                  contractABI,
-                  this.ethersProvider,
-                );
-                gasLimit = await contract.estimateGas[methodInfo.signature](
-                  ...methodInfo.args,
-                  { from: account },
-                );
-
-                // do not send this value in API call. only meant for txGas
-                gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
-                  .add(ethers.BigNumber.from(5000))
-                  .toNumber();
-                logMessage(`gas limit number${gasLimitNum}`);
-              }
-            } else {
-              gasLimitNum = ethers.BigNumber.from(
-                gasLimit.toString(),
-              ).toNumber();
-            }
-            logMessage(request);
-
-            paramArray.push(request);
-
-            const forwarderToUse = await findTheRightForwarder({
-              to,
-              smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
-              ethersProvider: this.ethersProvider,
-              forwarderAddresses: this.forwarderAddresses,
-              forwarderAddress: this.forwarderAddress,
-            });
-            this.smartContractTrustedForwarderMap[to] = forwarderToUse;
-
-            // Update the verifyingContract in domain data
-            this.forwarderDomainData.verifyingContract = forwarderToUse;
-            const domainDataToUse = this.forwarderDomainDetails[parseInt(forwarderToUse, 10)];
-
-            if (customDomainName) {
-              domainDataToUse.name = customDomainName.toString();
-            }
-
-            if (customDomainVersion) {
-              domainDataToUse.version = customDomainVersion.toString();
-            }
-
-            // Update the verifyingContract field of domain data based on the current request
-            if (signatureType && signatureType === this.eip712Sign) {
-              const domainSeparator = getDomainSeperator(
-                domainDataToUse,
+        if (metaTxApproach !== this.defaultMetaTransaction) {
+          if (!gasLimit || parseInt(gasLimit, 10) === 0) {
+            const contractABI = this.smartContractMap[to];
+            if (contractABI) {
+              const contract = new ethers.Contract(
+                to,
+                contractABI,
+                this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
               );
-              logMessage(domainSeparator);
-              paramArray.push(domainSeparator);
+              gasLimit = await contract.estimateGas[methodInfo.signature](
+                ...methodInfo.args,
+                { from: account },
+              );
+
+              // do not send this value in API call. only meant for txGas
+              gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
+                .add(ethers.BigNumber.from(5000))
+                .toNumber();
+              logMessage(`gas limit number${gasLimitNum}`);
             }
-
-            paramArray.push(signature);
-
-            const data = {
-              from: account,
-              apiId: api?.apiId,
-              params: paramArray,
-              to,
-              signatureType: signatureType ? this.eip712Sign : this.personalSign,
-            };
-
-            await sendTransaction(this, account, data);
           } else {
-            paramArray.push(...methodInfo.args);
-
-            const data = {
-              from: account,
-              apiId: api?.apiId,
-              params: paramArray,
-              gasLimit: decodedTx.gasLimit.toString(), // verify
-              to: decodedTx.to.toLowerCase(),
-            };
-
-            await sendTransaction(this, account, data);
+            gasLimitNum = ethers.BigNumber.from(
+              gasLimit.toString(),
+            ).toNumber();
           }
-        } else if (signature) {
-          const relayerPayment = {
-            token: config.DEFAULT_RELAYER_PAYMENT_TOKEN_ADDRESS,
-            amount: config.DEFAULT_RELAYER_PAYMENT_AMOUNT,
-          };
+          logMessage(request);
 
-          const data = {
-            rawTx: rawTransaction,
-            signature,
+          paramArray.push(request);
+
+          const forwarderToUse = await findTheRightForwarder({
             to,
+            smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
+            provider: this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
+            forwarderAddresses: this.forwarderAddresses,
+            forwarderAddress: this.forwarderAddress,
+          });
+          this.smartContractTrustedForwarderMap[to] = forwarderToUse;
+
+          // Update the verifyingContract in domain data
+          this.forwarderDomainData.verifyingContract = forwarderToUse;
+          const domainDataToUse = this.forwarderDomainDetails[parseInt(forwarderToUse, 10)];
+
+          if (customDomainName) {
+            domainDataToUse.name = customDomainName.toString();
+          }
+
+          if (customDomainVersion) {
+            domainDataToUse.version = customDomainVersion.toString();
+          }
+
+          // Update the verifyingContract field of domain data based on the current request
+          if (signatureType && signatureType === this.eip712Sign) {
+            const domainSeparator = getDomainSeperator(
+              domainDataToUse,
+            );
+            logMessage(domainSeparator);
+            paramArray.push(domainSeparator);
+          }
+
+          paramArray.push(signature);
+
+          const trustedForwarderMetaTransactionData = {
             from: account,
             apiId: api?.apiId,
-            data: decodedTx.data,
-            value: ethers.utils.hexValue(decodedTx.value),
-            gasLimit: decodedTx.gasLimit.toString(),
-            nonceBatchId: config.NONCE_BATCH_ID,
-            expiry: config.EXPIRY,
-            baseGas: config.BASE_GAS,
-            relayerPayment,
+            params: paramArray,
+            to,
+            signatureType: signatureType ? this.eip712Sign : this.personalSign,
           };
-
-          sendTransaction(this, account, data);
-        } else {
-          const error = formatMessage(
-            RESPONSE_CODES.INVALID_PAYLOAD,
-            `Invalid payload data ${JSON.stringify(
-              params[0],
-            )}. message and signature are required in param object`,
-          );
-          return error;
+          await sendTransaction(this, account, trustedForwarderMetaTransactionData);
         }
+        paramArray.push(...methodInfo.args);
+
+        const defaultMetaTransactionData = {
+          from: account,
+          apiId: api?.apiId,
+          params: paramArray,
+          gasLimit: decodedTx.gasLimit.toString(), // verify
+          to: decodedTx.to.toLowerCase(),
+        };
+
+        await sendTransaction(this, account, defaultMetaTransactionData);
       } else {
         const error = formatMessage(
           RESPONSE_CODES.INVALID_PAYLOAD,

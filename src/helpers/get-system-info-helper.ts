@@ -125,9 +125,9 @@ export async function getSystemInfo(
         this.personalSign = systemInfo.personalSign;
 
         // CHECK no value relayHubAddress in response of system infp
-        if (systemInfo.relayHubAddress) {
-          domainData.verifyingContract = systemInfo.relayHubAddress;
-        }
+        // if (systemInfo.relayHubAddress) {
+        //   domainData.verifyingContract = systemInfo.relayHubAddress;
+        // }
 
         if (this.forwarderAddress && this.forwarderAddress !== '') {
           this.biconomyForwarder = new ethers.Contract(

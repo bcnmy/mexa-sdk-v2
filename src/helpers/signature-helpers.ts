@@ -24,15 +24,16 @@ export const getSignatureParameters = (signature: string) => {
   };
 };
 
-export const getEIP712ForwardMessageToSign = async (
-  engine: Biconomy,
+export async function getEIP712ForwardMessageToSign(
+  forwarderDomainDetails: any,
+  forwarderDomainType: any,
+  forwardRequestType: any,
   request: any,
-  forwarder: any,
   domainData: any,
-) => {
+) {
   if (
-    !engine.forwarderDomainDetails
-      || Object.keys(engine.forwarderDomainDetails).length === 0
+    !forwarderDomainDetails
+      || Object.keys(forwarderDomainDetails).length === 0
   ) {
     throw new Error('Biconomy is not properly initialized');
   }
@@ -43,38 +44,38 @@ export const getEIP712ForwardMessageToSign = async (
 
   const dataToSign = JSON.stringify({
     types: {
-      EIP712Domain: engine.forwarderDomainType,
-      ERC20ForwardRequest: engine.forwardRequestType,
+      EIP712Domain: forwarderDomainType,
+      ERC20ForwardRequest: forwardRequestType,
     },
     domain: domainDataToUse,
     primaryType: 'ERC20ForwardRequest',
     message: request,
   });
   return dataToSign;
-};
+}
 
 // take parameter for chosen signature type V3 or V4
-export const getSignatureEIP712 = async (
-  engine: Biconomy,
+export async function getSignatureEIP712(
+  this: Biconomy,
   account: any,
   request: any,
-  forwarder: any,
   domainData: any,
   type: string,
-) => {
+) {
   // default V4 now
   let signTypedDataType = 'eth_signTypedData_v4';
   if (type === 'v3' || type === 'V3') {
     signTypedDataType = 'eth_signTypedData_v3';
   }
   const dataToSign = getEIP712ForwardMessageToSign(
-    engine,
+    this.forwarderDomainDetails,
+    this.forwarderDomainType,
+    this.forwardRequestType,
     request,
-    forwarder,
     domainData,
   );
 
-  const { ethersProvider } = engine;
+  const { ethersProvider } = this;
   try {
     const signature = await ethersProvider.send(signTypedDataType, [
       account,
@@ -87,7 +88,7 @@ export const getSignatureEIP712 = async (
   } catch (error) {
     return '';
   }
-};
+}
 
 export function getPersonalForwardMessageToSign(request: any) {
   return abi.soliditySHA3(
@@ -121,11 +122,11 @@ export function getPersonalForwardMessageToSign(request: any) {
  * @param engine Object containing the signer, walletprovider and originalprovider
  * @param request Object containing the request parameters
  * */
-export const getSignaturePersonal = (engine: Biconomy, request: any) => {
+export async function getSignaturePersonal(this: Biconomy, request: any) {
   const hashToSign = getPersonalForwardMessageToSign(request);
   let signature;
 
-  const { signer } = engine;
+  const { signer } = this;
   // eslint-disable-next-line no-async-promise-executor
   const promise = new Promise(async (resolve, reject) => {
     try {
@@ -139,4 +140,4 @@ export const getSignaturePersonal = (engine: Biconomy, request: any) => {
     }
   });
   return promise;
-};
+}

@@ -3,7 +3,6 @@ import { HandleSendTransactionParamsType } from '../common/types';
 import { RESPONSE_CODES } from '../config';
 import { decodeMethod, formatMessage, logMessage } from '../utils';
 import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
-import { getSignatureEIP712, getSignaturePersonal } from './signature-helpers';
 import type { Biconomy } from '..';
 
 /**
@@ -18,10 +17,6 @@ export async function handleSendTransaction(
   handleSendTransactionParams: HandleSendTransactionParamsType,
 ) {
   try {
-    const {
-      params,
-    } = handleSendTransactionParams;
-
     if (!this.interfaceMap) {
       return {
         error: 'Interface Map is undefined',
@@ -77,6 +72,24 @@ export async function handleSendTransaction(
         code: RESPONSE_CODES.BICONOMY_FORWARDER_UNDEFINED,
       };
     }
+
+    if (!this.forwarderAddresses) {
+      return {
+        error: 'Forwarder Addresses array is undefined',
+        code: RESPONSE_CODES.FORWARDER_ADDRESSES_ARRAY_UNDEFINED,
+      };
+    }
+
+    if (!this.forwarderAddress) {
+      return {
+        error: 'Forwarder Address is undefined',
+        code: RESPONSE_CODES.FORWARDER_ADDRESS_UNDEFINED,
+      };
+    }
+
+    const {
+      params, fallback,
+    } = handleSendTransactionParams;
 
     if (params && params[0] && params[0].to) {
       const to = params[0].to.toLowerCase();
@@ -178,7 +191,7 @@ export async function handleSendTransaction(
               const contract = new ethers.Contract(
                 to,
                 contractAbi,
-                this.ethersProvider,
+                this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
               );
               txGas = await contract.estimateGas[methodInfo.signature](
                 ...methodInfo.args,
@@ -210,7 +223,7 @@ export async function handleSendTransaction(
           const forwarderToAttach = await findTheRightForwarder({
             to,
             smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
-            ethersProvider: this.ethersProvider,
+            provider: this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
             forwarderAddresses: this.forwarderAddresses,
             forwarderAddress: this.forwarderAddress,
           });
@@ -252,11 +265,9 @@ export async function handleSendTransaction(
               signatureEIP712 = signatureFromPayload;
               logMessage(`EIP712 signature from payload is ${signatureEIP712}`);
             } else {
-              signatureEIP712 = await getSignatureEIP712(
-                this,
+              signatureEIP712 = await this.getSignatureEIP712(
                 account,
                 request,
-                forwarderToAttach,
                 domainDataToUse,
                 signTypedDataType,
               );
@@ -270,8 +281,7 @@ export async function handleSendTransaction(
               signaturePersonal = signatureFromPayload;
               logMessage(`Personal signature from payload is ${signaturePersonal}`);
             } else {
-              signaturePersonal = await getSignaturePersonal(
-                this,
+              signaturePersonal = await this.getSignaturePersonal(
                 request,
               );
               logMessage(`Personal signature is ${signaturePersonal}`);
