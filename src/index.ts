@@ -7,53 +7,77 @@ import { ethers } from 'ethers';
 import fetch from 'node-fetch';
 import {
   DappApiMapType,
+  ForwarderDomainData,
+  ForwarderDomainType,
+  ForwardRequestType,
   InterfaceMapType,
   JsonRpcCallback,
   JsonRpcRequest,
+  OptionsType,
   SmartContractMapType,
   SmartContractMetaTransactionMapType,
   SmartContractTrustedForwarderMapType,
 } from './common/types';
 import {
-  formatMessage, getFetchOptions, isEthersProvider, logMessage, validateOptions,
+  formatMessage, getFetchOptions, logMessage, validateOptions,
 } from './utils';
 import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-import { sendTransaction } from './helpers/send-transaction-helper';
+import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
+import { getSignatureEIP712, getSignaturePersonal } from './helpers/signature-helpers';
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
 
   private externalProvider: ExternalProvider;
 
+  readOnlyProvider?: ethers.providers.JsonRpcProvider;
+
   provider: ExternalProvider;
 
-  dappApiMap: DappApiMapType = {};
+  dappApiMap?: DappApiMapType;
 
-  interfaceMap: InterfaceMapType = {};
+  interfaceMap?: InterfaceMapType;
 
-  smartContractMap: SmartContractMapType = {};
+  smartContractMap?: SmartContractMapType;
 
-  smartContractMetaTransactionMap: SmartContractMetaTransactionMapType = {};
+  smartContractMetaTransactionMap?: SmartContractMetaTransactionMapType;
 
-  smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType = {};
+  smartContractTrustedForwarderMap?: SmartContractTrustedForwarderMapType;
 
   strictMode = false;
 
   signer: any;
 
-  forwarderAddresses: string[] = [];
+  forwarderDomainType?: ForwarderDomainType;
 
-  forwarderAddress: string = '';
+  defaultMetaTransaction?: string;
 
-  // TODO Review type
-  ethersProvider: any;
+  trustedForwarderMetaTransaction?: string;
 
-  networkId: number = 0;
+  forwardRequestType?: ForwardRequestType;
 
-  dappId: string = '';
+  forwarderDomainData?: ForwarderDomainData;
+
+  forwarderDomainDetails?: Array<ForwarderDomainData>;
+
+  eip712Sign?: string;
+
+  personalSign?: string;
+
+  biconomyForwarder?: ethers.Contract;
+
+  forwarderAddresses?: string[];
+
+  forwarderAddress?: string;
+
+  ethersProvider: ethers.providers.Web3Provider;
+
+  networkId?: number;
+
+  dappId?: string;
 
   getSystemInfo = getSystemInfo;
 
@@ -61,7 +85,13 @@ export class Biconomy extends EventEmitter {
 
   sendSignedTransaction = sendSignedTransaction;
 
-  constructor(provider: ExternalProvider, options: { apiKey: string; strictMode: boolean }) {
+  getSignatureEIP712 = getSignatureEIP712;
+
+  getSignaturePersonal = getSignaturePersonal;
+
+  public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
+
+  constructor(provider: ExternalProvider, options: OptionsType) {
     super();
     validateOptions(options);
     this.apiKey = options.apiKey;
@@ -69,52 +99,19 @@ export class Biconomy extends EventEmitter {
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
 
-    if (isEthersProvider(provider)) {
-      this.ethersProvider = provider;
-    } else {
-      this.ethersProvider = new ethers.providers.Web3Provider(provider);
+    // TODO
+    if (options.jsonRpcUrl) {
+      this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
     }
+    this.ethersProvider = new ethers.providers.Web3Provider(provider);
   }
-
-  forwarderDomainType: any;
-
-  metaInfoType: any;
-
-  relayerPaymentType: any;
-
-  metaTransactionType: any;
-
-  loginDomainType: any;
-
-  loginMessageType: any;
-
-  loginDomainData: any;
-
-  forwardRequestType: any;
-
-  forwarderDomainData: any;
-
-  forwarderDomainDetails: any;
-
-  trustedForwarderOverhead: any;
-
-  TRUSTED_FORWARDER: any;
-
-  DEFAULT: any;
-
-  EIP712_SIGN: any;
-
-  PERSONAL_SIGN: any;
-
-  biconomyForwarder: any;
-
-  domainType: any;
 
   private proxyFactory() {
     return new Proxy(this.externalProvider, this.proxyProvider);
   }
 
   proxyProvider = {
+    // Difference between send and request
     get: (target: ExternalProvider, prop: string, ...args: any[]) => {
       switch (prop) {
         case 'send':
@@ -136,9 +133,9 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ method, params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ method, params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -156,9 +153,9 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ method, params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ method, params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -177,9 +174,9 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ method, params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ method, params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -227,9 +224,9 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ method, params, fallback});
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ method, params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -244,9 +241,9 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this.handleSendTransaction({ method, params, fallback });
+          return this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return this.sendSignedTransaction({ method, params, fallback });
+          return this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -262,7 +259,7 @@ export class Biconomy extends EventEmitter {
    * contract which will be used to decode information during function calls.
    * @param apiKey API key used to authenticate the request at biconomy server
    * */
-  async _init(apiKey: string) {
+  async init(apiKey: string) {
     try {
       this.signer = await this.ethersProvider.getSigner();
       // Check current network id and dapp network id registered on dashboard
