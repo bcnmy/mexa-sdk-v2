@@ -26,11 +26,13 @@ export const mexaSdkClientMessenger = async (
           hash: tx.transactionHash,
         });
       },
+      // TODO
+      // Change type in messaging sdk
       onError: (errorResponseData) => {
         console.log('Error message received at client\n');
         console.log(
           {
-            code: errorResponseData.code,
+            // code: errorResponseData.code,
             error: errorResponseData.error,
             transactionId: errorResponseData.transactionId,
           },

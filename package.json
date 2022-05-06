@@ -1,7 +1,7 @@
 {
   "name": "mexa-sdk-v2",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/src/index.js",
   "repository": "https://github.com/bcnmy/mexa-sdk-v2.git",
   "author": "arcticfloyd1984 <yashasvichaudhry98@gmail.com>",
   "license": "MIT",
@@ -20,9 +20,11 @@
     "gasless-messaging-sdk": "git+ssh://git@github.com:bcnmy/gasless-messaging-sdk.git",
     "install": "^0.13.0",
     "mongoose": "^6.3.1",
-    "node-fetch": "^3.2.4"
+    "node-fetch": "^3.2.4",
+    "request-promise": "^4.2.6"
   },
   "devDependencies": {
+    "@types/request-promise": "^4.1.48",
     "@typescript-eslint/eslint-plugin": "^5.11.0",
     "@typescript-eslint/parser": "^5.11.0",
     "eslint": "^8.9.0",

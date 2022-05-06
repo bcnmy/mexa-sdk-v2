@@ -1,20 +1,29 @@
-import { IBiconomy } from '../common/types';
+import { post } from 'request-promise';
+import type { Biconomy } from '..';
 import { BICONOMY_RESPONSE_CODES, config, RESPONSE_CODES } from '../config';
-import { getFetchOptions, logMessage } from '../utils';
+import { logMessage } from '../utils';
 
 /**
  * Method to send the transaction to biconomy server and call the callback method
  * to pass the result of meta transaction to web3 function call.
- * @param engine Object representing biconomy provider engine
+ * @param this Object representing biconomy provider this
  * @param account User selected account on current wallet
  * @param data Data to be sent to biconomy server having transaction data
  * */
-export const sendTransaction = async (engine: IBiconomy, account: string, data: any) => {
-  if (engine && account && data) {
-    const fetchOption = getFetchOptions('POST', engine.apiKey, JSON.stringify(data));
-    const { metaEntryPointUrl } = config;
+export async function sendTransaction(this: Biconomy, account: string, data: any) {
+  if (this && account && data) {
+    const { metaEntryPointBaseUrl } = config;
 
-    fetch(`${metaEntryPointUrl}`, fetchOption)
+    const options = {
+      uri: metaEntryPointBaseUrl,
+      headers: {
+        'x-api-key': this.apiKey,
+        'Content-Type': 'application/json;charset=utf-8',
+      },
+      body: JSON.stringify(data),
+    };
+
+    post(options)
       .then((response) => response.json())
       .then((result) => {
         logMessage(result);
@@ -26,7 +35,7 @@ export const sendTransaction = async (engine: IBiconomy, account: string, data: 
           // Any error from relayer infra
           // TODO
           // Involve fallback here with callDefaultProvider
-          const error = {};
+          const error:any = {};
           error.code = result.flag || result.code;
           if (result.flag === BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
             error.code = RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;
@@ -41,7 +50,7 @@ export const sendTransaction = async (engine: IBiconomy, account: string, data: 
       });
   } else {
     logMessage(
-      `Invalid arguments, provider: ${engine} account: ${account} api: ${api} data: ${data}`,
+      `Invalid arguments, provider: ${this} account: ${account} data: ${data}`,
     );
   }
-};
+}

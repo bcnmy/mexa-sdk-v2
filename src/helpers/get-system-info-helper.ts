@@ -1,11 +1,11 @@
 import { ethers } from 'ethers';
+import { get } from 'request-promise';
 import {
   config, RESPONSE_CODES,
 } from '../config';
-import { formatMessage, getFetchOptions, logMessage } from '../utils';
+import { formatMessage, logMessage } from '../utils';
 
 import { biconomyForwarderAbi } from '../abis';
-
 import type { Biconomy } from '..';
 import { ContractMetaTransactionType } from '../common/types';
 
@@ -23,7 +23,17 @@ const getDappInfo = async (
   try {
     let smartContractMetaTransactionMap: any; let interfaceMap: any; let smartContractMap: any;
     const { getSmartContractsPerDappApiUrl } = config;
-    fetch(getSmartContractsPerDappApiUrl, getFetchOptions('GET', dappId))
+
+    const options = {
+      uri: getSmartContractsPerDappApiUrl,
+      headers: {
+        // 'x-api-key': apiKey,
+        'Content-Type': 'application/json;charset=utf-8',
+      },
+      body: dappId,
+    };
+
+    get(options)
       .then((response) => response.json())
       // eslint-disable-next-line consistent-return
       .then((result) => {
@@ -102,9 +112,13 @@ export async function getSystemInfo(
     return error;
   }
   domainData.chainId = providerNetworkId;
-  fetch(
-    `${config.metaEntryPointBaseUrl}/api/systemInfo/?networkId=${providerNetworkId}`,
-  )
+  const options = {
+    uri: `${config.metaEntryPointBaseUrl}/api/systemInfo/?networkId=${providerNetworkId}`,
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+  };
+  get(options)
     .then((response) => response.json())
     .then(async (systemInfo) => {
       if (systemInfo) {

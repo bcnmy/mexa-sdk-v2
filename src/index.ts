@@ -4,7 +4,7 @@
 import EventEmitter from 'events';
 import { ExternalProvider } from '@ethersproject/providers';
 import { ethers } from 'ethers';
-import fetch from 'node-fetch';
+import { get } from 'request-promise';
 import {
   DappApiMapType,
   ForwarderDomainData,
@@ -19,14 +19,15 @@ import {
   SmartContractTrustedForwarderMapType,
 } from './common/types';
 import {
-  formatMessage, getFetchOptions, logMessage, validateOptions,
+  formatMessage, logMessage, validateOptions,
 } from './utils';
 import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
+// import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 import { getSignatureEIP712, getSignaturePersonal } from './helpers/signature-helpers';
+import { sendTransaction } from './helpers/send-transaction-helper';
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -83,13 +84,15 @@ export class Biconomy extends EventEmitter {
 
   handleSendTransaction = handleSendTransaction;
 
+  sendTransaction = sendTransaction;
+
   sendSignedTransaction = sendSignedTransaction;
 
   getSignatureEIP712 = getSignatureEIP712;
 
   getSignaturePersonal = getSignaturePersonal;
 
-  public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
+  // public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
 
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
@@ -264,7 +267,14 @@ export class Biconomy extends EventEmitter {
       this.signer = await this.ethersProvider.getSigner();
       // Check current network id and dapp network id registered on dashboard
       const { getDappDataUrl } = config;
-      fetch(getDappDataUrl, getFetchOptions('GET', apiKey))
+      const options = {
+        uri: getDappDataUrl,
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+      };
+      get(options)
         .then((response) => response.json())
         // eslint-disable-next-line consistent-return
         .then(async (response) => {

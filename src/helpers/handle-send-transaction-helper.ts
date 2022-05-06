@@ -156,9 +156,10 @@ export async function handleSendTransaction(
           logMessage(
             'Falling back to default provider as strict mode is false in biconomy',
           );
-          return {
+          return await fallback();
+          /* return {
             code: 1, // call fallback
-          };
+          }; */
         }
         logMessage('API found');
 

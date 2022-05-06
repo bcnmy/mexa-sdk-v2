@@ -1,10 +1,8 @@
-import txDecoder from 'ethereum-tx-decoder';
+// import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
-import abi from 'ethereumjs-abi';
 import { eip2771BaseAbi } from '../abis';
-import { config, RESPONSE_CODES } from '../config';
-import { decodeMethod, formatMessage, logMessage } from '../utils';
-import type { Biconomy } from '..';
+import { config } from '../config';
+import { logMessage } from '../utils';
 import { FindRightForwarderParamsType } from '../common/types';
 
 export const findTheRightForwarder = async (
@@ -103,7 +101,7 @@ export const getDomainSeperator = (biconomyForwarderDomainData: any) => {
 };
 
 // TODO discuss if we are to expose
-export async function getForwardRequestAndMessageToSign(
+/* export async function getForwardRequestAndMessageToSign(
   this: Biconomy,
   rawTransaction,
   customBatchId,
@@ -249,7 +247,9 @@ export async function getForwardRequestAndMessageToSign(
         } else {
           const error = formatMessage(
             RESPONSE_CODES.INVALID_OPERATION,
-            'Smart contract is not registered in the dashboard for this meta transaction approach. Kindly use biconomy.getUserMessageToSign',
+            'Smart contract is not registered
+             in the dashboard for this meta transaction approach.
+             Kindly use biconomy.getUserMessageToSign',
           );
           return error;
         }
@@ -311,11 +311,13 @@ export async function getForwardRequestAndMessageToSign(
       }
       const error = formatMessage(
         RESPONSE_CODES.BICONOMY_NOT_INITIALIZED,
-        'Decoders not initialized properly in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard',
+        'Decoders not initialized properly in mexa sdk.
+         Make sure your have smart contracts registered on Mexa Dashboard',
       );
       return error;
     }
   } catch (error) {
-    throw new Error(`Something went wrong in getForwardRequestAndMessageToSign(). Error message: ${JSON.stringify(error)}`);
+    throw new Error(`Something went wrong in
+    getForwardRequestAndMessageToSign(). Error message: ${JSON.stringify(error)}`);
   }
-}
+} */
