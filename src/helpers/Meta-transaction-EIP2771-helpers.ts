@@ -3,11 +3,9 @@ import { ethers } from 'ethers';
 import abi from 'ethereumjs-abi';
 import { eip2771BaseAbi } from '../abis';
 import { config, RESPONSE_CODES } from '../config';
-import { decodeMethod, formatMessage, logger } from '../utils';
+import { decodeMethod, formatMessage, logMessage } from '../utils';
 import type { Biconomy } from '..';
 import { FindRightForwarderParamsType } from '../common/types';
-
-const logMessage = logger.getLogger('eip2771-hepers');
 
 export const findTheRightForwarder = async (
   findTheRightForwarderParams: FindRightForwarderParamsType,

@@ -1,11 +1,9 @@
 import { ethers } from 'ethers';
 import { HandleSendTransactionParamsType } from '../common/types';
 import { RESPONSE_CODES } from '../config';
-import { decodeMethod, formatMessage, logger } from '../utils';
+import { decodeMethod, formatMessage, logMessage } from '../utils';
 import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 import type { Biconomy } from '..';
-
-const logMessage = logger.getLogger('handle-send-transaction-helper');
 
 /**
   * Function decodes the parameter in payload and gets the user signature using eth_signTypedData_v4

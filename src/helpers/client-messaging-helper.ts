@@ -1,8 +1,6 @@
 import { ClientMessenger } from 'gasless-messaging-sdk';
 import { config } from '../config';
-import { logger } from '../utils';
-
-const logMessage = logger.getLogger('client-messenger');
+import { logMessage } from '../utils';
 
 export const mexaSdkClientMessenger = async (transactionData: {
   transactionId: string;

@@ -4,14 +4,12 @@ import { ethers } from 'ethers';
 import type { Biconomy } from '..';
 import { SendSingedTransactionParamsType } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
-import { decodeMethod, formatMessage, logger } from '../utils';
+import { decodeMethod, formatMessage, logMessage } from '../utils';
 import {
   findTheRightForwarder,
   getDomainSeperator,
 } from './meta-transaction-EIP2771-helpers';
 import { sendTransaction } from './send-transaction-helper';
-
-const logMessage = logger.getLogger('signed-transaction-helper');
 
 /**
  * Method used to handle transaction initiated using web3.eth.sendSignedTransaction method

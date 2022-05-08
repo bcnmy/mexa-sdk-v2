@@ -19,7 +19,7 @@ import {
   SmartContractTrustedForwarderMapType,
 } from './common/types';
 import {
-  formatMessage, getFetchOptions, logger, validateOptions,
+  formatMessage, getFetchOptions, logMessage, validateOptions,
 } from './utils';
 import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
@@ -27,8 +27,6 @@ import { sendSignedTransaction } from './helpers/send-signed-transaction-helper'
 import { getSystemInfo } from './helpers/get-system-info-helper';
 import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 import { getSignatureEIP712, getSignaturePersonal } from './helpers/signature-helpers';
-
-const logMessage = logger.getLogger('app');
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -80,6 +78,8 @@ export class Biconomy extends EventEmitter {
   networkId?: number;
 
   dappId?: string;
+
+  logLevel?: string;
 
   getSystemInfo = getSystemInfo;
 

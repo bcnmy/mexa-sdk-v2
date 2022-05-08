@@ -1,8 +1,6 @@
 import { IBiconomy } from '../common/types';
 import { BICONOMY_RESPONSE_CODES, config, RESPONSE_CODES } from '../config';
-import { getFetchOptions, logger } from '../utils';
-
-const logMessage = logger.getLogger('app');
+import { getFetchOptions, logMessage } from '../utils';
 
 /**
  * Method to send the transaction to biconomy server and call the callback method

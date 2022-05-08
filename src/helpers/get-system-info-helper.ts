@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { config, RESPONSE_CODES } from '../config';
-import { formatMessage, getFetchOptions, logger } from '../utils';
+import { formatMessage, getFetchOptions, logMessage } from '../utils';
 import { biconomyForwarderAbi } from '../abis';
 
 import type { Biconomy } from '..';
@@ -12,7 +12,6 @@ const domainData = {
   verifyingContract: config.eip712VerifyingContract,
   chainId: 0,
 };
-const logMessage = logger.getLogger('app');
 
 const getDappInfo = async (dappId: string, strictMode: boolean) => {
   try {
