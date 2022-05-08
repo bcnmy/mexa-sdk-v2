@@ -84,6 +84,14 @@ export async function getSystemInfo(this: Biconomy, providerNetworkId: number) {
   }
   const { dappId } = this;
 
+  if (!this.dappId) {
+    return {
+      error: 'dappid is undefined ',
+      code: RESPONSE_CODES.DAPP_ID_UNDEFINED,
+    };
+  }
+  const { dappId } = this;
+
   if (providerNetworkId !== this.networkId) {
     const error = formatMessage(
       RESPONSE_CODES.NETWORK_ID_MISMATCH,

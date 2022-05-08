@@ -229,11 +229,8 @@ export async function sendSignedTransaction(
 
           const forwarderToUse = await findTheRightForwarder({
             to,
-            smartContractTrustedForwarderMap:
-              this.smartContractTrustedForwarderMap,
-            provider: this.readOnlyProvider
-              ? this.readOnlyProvider
-              : this.ethersProvider,
+            smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
+            provider: this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
             forwarderAddresses: this.forwarderAddresses,
             forwarderAddress: this.forwarderAddress,
           });
