@@ -1,15 +1,17 @@
+/* eslint-disable consistent-return */
 import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
 import type { Biconomy } from '..';
 import { SendSingedTransactionParamsType } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
+import { decodeMethod, formatMessage, logger } from '../utils';
 import {
-  decodeMethod, formatMessage, logger,
-} from '../utils';
-import { findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
+  findTheRightForwarder,
+  getDomainSeperator,
+} from './meta-transaction-EIP2771-helpers';
 import { sendTransaction } from './send-transaction-helper';
 
-const logMessage = logger.getLogger('send-signed-transaction-helper');
+const logMessage = logger.getLogger('signed-transaction-helper');
 
 /**
  * Method used to handle transaction initiated using web3.eth.sendSignedTransaction method
@@ -26,7 +28,70 @@ export async function sendSignedTransaction(
   this: Biconomy,
   sendSignedTransactionParams: SendSingedTransactionParamsType,
 ) {
-  const { method, params, fallback } = sendSignedTransactionParams;
+  if (!this.interfaceMap) {
+    return {
+      error: 'Interface Map is undefined',
+      code: RESPONSE_CODES.INTERFACE_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.dappApiMap) {
+    return {
+      error: 'Dapp Api Map is undefined',
+      code: RESPONSE_CODES.DAPP_API_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.smartContractMetaTransactionMap) {
+    return {
+      error: 'Smart contract meta transaction map is undefined',
+      code: RESPONSE_CODES.SMART_CONTRACT_METATRANSACTION_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.smartContractMap) {
+    return {
+      error: 'Smart contract map is undefined',
+      code: RESPONSE_CODES.SMART_CONTRACT_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.smartContractTrustedForwarderMap) {
+    return {
+      error: 'Smart contract trusted forwarder map is undefined',
+      code: RESPONSE_CODES.SMART_CONTRACT_TRSUTED_FORWARDER_MAP_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderDomainData) {
+    return {
+      error: 'Forwarder domain data is undefined',
+      code: RESPONSE_CODES.FORWARDER_DOMAIN_DATA_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderDomainDetails) {
+    return {
+      error: 'Forwarder domain details is undefined',
+      code: RESPONSE_CODES.FORWARDER_DOMAIN_DETAILS_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderAddresses) {
+    return {
+      error: 'Forwarder Addresses array is undefined',
+      code: RESPONSE_CODES.FORWARDER_ADDRESSES_ARRAY_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderAddress) {
+    return {
+      error: 'Forwarder Address is undefined',
+      code: RESPONSE_CODES.FORWARDER_ADDRESS_UNDEFINED,
+    };
+  }
+
+  let { params, fallback } = sendSignedTransactionParams;
   if (params && params[0]) {
     const data = params[0];
     let rawTransaction;
@@ -55,7 +120,11 @@ export async function sendSignedTransaction(
         const to = decodedTx.to.toLowerCase();
         let methodInfo = decodeMethod(to, decodedTx.data, this.interfaceMap);
         if (!methodInfo) {
-          methodInfo = decodeMethod(config.SCW, decodedTx.data, this.interfaceMap);
+          methodInfo = decodeMethod(
+            config.SCW,
+            decodedTx.data,
+            this.interfaceMap,
+          );
           if (!methodInfo) {
             if (this.strictMode) {
               const error = formatMessage(
@@ -69,12 +138,6 @@ export async function sendSignedTransaction(
             );
             if (typeof data === 'object' && data.rawTransaction) {
               params = [data.rawTransaction];
-            }
-
-            try {
-              return await callDefaultProvider(this, payload, `No smart contract wallet or smart contract registered on dashboard with address (${decodedTx.to})`);
-            } catch (error) {
-              return error;
             }
           }
         }
@@ -108,17 +171,10 @@ export async function sendSignedTransaction(
           if (typeof data === 'object' && data.rawTransaction) {
             params = [data.rawTransaction];
           }
-          try {
-            return await callDefaultProvider(this, payload, `Current provider can not sign transactions. Make sure to register method ${methodName} on Biconomy Dashboard`);
-          } catch (error) {
-            return error;
-          }
         }
         logMessage.info('API found');
         const paramArray = [];
-        const parsedTransaction = ethers.utils.parseTransaction(
-          rawTransaction,
-        );
+        const parsedTransaction = ethers.utils.parseTransaction(rawTransaction);
         const account = parsedTransaction ? parsedTransaction.from : undefined;
 
         logMessage.info(`signer is ${account}`);
@@ -131,126 +187,103 @@ export async function sendSignedTransaction(
         }
 
         /**
-           * based on the api check contract meta transaction type
-           * change paramArray accordingly
-           * build request EDIT :
-           *  do not build the request again it will result in signature mismatch
-           * create domain separator based on signature type
-           * use already available signature
-           * send API call with appropriate parameters based on signature type
-           *
-           */
+         * based on the api check contract meta transaction type
+         * change paramArray accordingly
+         * build request EDIT :
+         *  do not build the request again it will result in signature mismatch
+         * create domain separator based on signature type
+         * use already available signature
+         * send API call with appropriate parameters based on signature type
+         *
+         */
         let gasLimitNum;
         let { gasLimit } = decodedTx;
-        if (api.url === config.metaTxUrl) {
-          if (metaTxApproach !== this.DEFAULT) {
-            if (!gasLimit || parseInt(gasLimit, 10) === 0) {
-              const contractABI = this.smartContractMap[to];
-              if (contractABI) {
-                const contract = new ethers.Contract(
-                  to,
-                  JSON.parse(contractABI),
-                  this.ethersProvider,
-                );
-                gasLimit = await contract.estimateGas[methodInfo.signature](
-                  ...methodInfo.args,
-                  { from: account },
-                );
-
-                // do not send this value in API call. only meant for txGas
-                gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
-                  .add(ethers.BigNumber.from(5000))
-                  .toNumber();
-                logMessage.info(`gas limit number${gasLimitNum}`);
-              }
-            } else {
-              gasLimitNum = ethers.BigNumber.from(
-                gasLimit.toString(),
-              ).toNumber();
-            }
-            logMessage.info(request);
-
-            paramArray.push(request);
-
-            const forwarderToUse = await findTheRightForwarder(this, to);
-            this.smartContractTrustedForwarderMap[to] = await findTheRightForwarder(this, to);
-
-            // Update the verifyingContract in domain data
-            this.forwarderDomainData.verifyingContract = forwarderToUse;
-            const domainDataToUse = this.forwarderDomainDetails[forwarderToUse];
-
-            if (customDomainName) {
-              domainDataToUse.name = customDomainName.toString();
-            }
-
-            if (customDomainVersion) {
-              domainDataToUse.version = customDomainVersion.toString();
-            }
-
-            // Update the verifyingContract field of domain data based on the current request
-            if (signatureType && signatureType === this.EIP712_SIGN) {
-              const domainSeparator = getDomainSeperator(
-                domainDataToUse,
+        if (metaTxApproach !== this.defaultMetaTransaction) {
+          if (!gasLimit || parseInt(gasLimit, 10) === 0) {
+            const contractABI = this.smartContractMap[to];
+            if (contractABI) {
+              const contract = new ethers.Contract(
+                to,
+                contractABI,
+                this.readOnlyProvider
+                  ? this.readOnlyProvider
+                  : this.ethersProvider,
               );
-              logMessage.info(domainSeparator);
-              paramArray.push(domainSeparator);
+              gasLimit = await contract.estimateGas[methodInfo.signature](
+                ...methodInfo.args,
+                { from: account },
+              );
+
+              // do not send this value in API call. only meant for txGas
+              gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
+                .add(ethers.BigNumber.from(5000))
+                .toNumber();
+              logMessage.info(`gas limit number${gasLimitNum}`);
             }
-
-            paramArray.push(signature);
-
-            const data = {
-              from: account,
-              apiId: api.id,
-              params: paramArray,
-              to,
-              signatureType: signatureType ? this.EIP712_SIGN : this.PERSONAL_SIGN,
-            };
-
-            await sendTransaction(this, account, data);
           } else {
-            paramArray.push(...methodInfo.args);
-
-            const data = {
-              from: account,
-              apiId: api.id,
-              params: paramArray,
-              gasLimit: decodedTx.gasLimit.toString(), // verify
-              to: decodedTx.to.toLowerCase(),
-            };
-
-            await sendTransaction(this, account, data);
+            gasLimitNum = ethers.BigNumber.from(gasLimit.toString()).toNumber();
           }
-        } else if (signature) {
-          const relayerPayment = {
-            token: config.DEFAULT_RELAYER_PAYMENT_TOKEN_ADDRESS,
-            amount: config.DEFAULT_RELAYER_PAYMENT_AMOUNT,
-          };
+          logMessage.info(request);
 
-          const data = {
-            rawTx: rawTransaction,
-            signature,
+          paramArray.push(request);
+
+          const forwarderToUse = await findTheRightForwarder({
             to,
-            from: account,
-            apiId: api.id,
-            data: decodedTx.data,
-            value: ethers.utils.hexValue(decodedTx.value),
-            gasLimit: decodedTx.gasLimit.toString(),
-            nonceBatchId: config.NONCE_BATCH_ID,
-            expiry: config.EXPIRY,
-            baseGas: config.BASE_GAS,
-            relayerPayment,
-          };
+            smartContractTrustedForwarderMap:
+              this.smartContractTrustedForwarderMap,
+            provider: this.readOnlyProvider
+              ? this.readOnlyProvider
+              : this.ethersProvider,
+            forwarderAddresses: this.forwarderAddresses,
+            forwarderAddress: this.forwarderAddress,
+          });
+          this.smartContractTrustedForwarderMap[to] = forwarderToUse;
 
-          sendTransaction(this, account, data);
-        } else {
-          const error = formatMessage(
-            RESPONSE_CODES.INVALID_PAYLOAD,
-            `Invalid payload data ${JSON.stringify(
-              params[0],
-            )}. message and signature are required in param object`,
+          // Update the verifyingContract in domain data
+          this.forwarderDomainData.verifyingContract = forwarderToUse;
+          const domainDataToUse = this.forwarderDomainDetails[parseInt(forwarderToUse, 10)];
+
+          if (customDomainName) {
+            domainDataToUse.name = customDomainName.toString();
+          }
+
+          if (customDomainVersion) {
+            domainDataToUse.version = customDomainVersion.toString();
+          }
+
+          // Update the verifyingContract field of domain data based on the current request
+          if (signatureType && signatureType === this.eip712Sign) {
+            const domainSeparator = getDomainSeperator(domainDataToUse);
+            logMessage.info(domainSeparator);
+            paramArray.push(domainSeparator);
+          }
+
+          paramArray.push(signature);
+
+          const trustedForwarderMetaTransactionData = {
+            from: account,
+            apiId: api?.apiId,
+            params: paramArray,
+            to,
+            signatureType: signatureType ? this.eip712Sign : this.personalSign,
+          };
+          await sendTransaction(
+            this,
+            account,
+            trustedForwarderMetaTransactionData,
           );
-          return error;
         }
+        paramArray.push(...methodInfo.args);
+
+        const defaultMetaTransactionData = {
+          from: account,
+          apiId: api?.apiId,
+          params: paramArray,
+          gasLimit: decodedTx.gasLimit.toString(), // verify
+          to: decodedTx.to.toLowerCase(),
+        };
+
+        await sendTransaction(this, account, defaultMetaTransactionData);
       } else {
         const error = formatMessage(
           RESPONSE_CODES.INVALID_PAYLOAD,

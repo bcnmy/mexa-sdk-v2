@@ -1,6 +1,5 @@
-import { ExternalProvider } from '@ethersproject/providers';
-import { ethers } from 'ethers';
 import log4js from 'log4js';
+import { OptionsType } from './common/types';
 
 /**
  * Single method to be used for logging purpose.
@@ -24,11 +23,7 @@ export const logger = log4js.configure({
   },
 });
 
-export const getFetchOptions = (
-  method: string,
-  apiKey: string,
-  data?: string,
-) => ({
+export const getFetchOptions = (method: string, apiKey: string, data?: string) => ({
   method,
   headers: {
     'x-api-key': apiKey,
@@ -37,19 +32,13 @@ export const getFetchOptions = (
   body: data,
 });
 
-export const formatMessage = (code: string, message: string) => ({
-  code,
-  message,
-});
+export const formatMessage = (code: string, message: string) => ({ code, message });
 
 /**
  * Validate parameters passed to biconomy object. Dapp id and api key are mandatory.
  * */
 // TODO more options would be added so update this
-export const validateOptions = (options: {
-  apiKey: string;
-  strictMode: boolean;
-}) => {
+export const validateOptions = (options: OptionsType) => {
   if (!options) {
     throw new Error(
       'Options object needs to be passed to Biconomy Object with apiKey as mandatory key',
@@ -62,14 +51,11 @@ export const validateOptions = (options: {
   }
 };
 
-// TODO review types for data and interfaceMap
 export const decodeMethod = (to: string, data: any, interfaceMap: any) => {
   if (to && data && interfaceMap[to]) {
     return interfaceMap[to].parseTransaction({ data });
   }
-  throw new Error('to, data or interfaceMap is undefined');
+  throw new Error(
+    'to, data or interfaceMap is undefined',
+  );
 };
-
-export const isEthersProvider = (
-  provider: ExternalProvider,
-) => ethers.providers.Provider.isProvider(provider);

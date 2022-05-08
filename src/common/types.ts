@@ -1,53 +1,78 @@
 import { Types } from 'mongoose';
-import { ethers, Signer, Wallet } from 'ethers';
+import { ethers } from 'ethers';
 
-export type MetaApiType = {
-  apiId: string;
-  name: string;
-  dappId: Types.ObjectId;
-  contractId: Types.ObjectId;
-  method: string;
-  methodType: string;
-  apiType: string;
-  createdOn: number;
-  createdBy: Types.ObjectId;
+export type OptionsType = {
+  apiKey: string,
+  strictMode: boolean,
+  jsonRpcUrl?: string
 };
 
-export interface Engine {
-  signer: Signer;
-  walletProvider: Wallet;
-  originalProvider?: any;
-  canSignMessages?: any;
-}
+export type MetaApiType = {
+  apiId: string,
+  name: string,
+  dappId: Types.ObjectId,
+  contractId: Types.ObjectId,
+  method: string,
+  methodType: string,
+  apiType: string,
+  createdOn: number,
+  createdBy: Types.ObjectId,
+  contractAddress: string
+};
 
 export type DappApiMapType = {
   [key: string]: {
-    [key: string]: MetaApiType;
-  };
+    [key: string]: MetaApiType
+  }
 };
 
 export type InterfaceMapType = {
-  [key: string]: ethers.utils.Interface;
+  [key: string]: ethers.utils.Interface
 };
 
 export type SmartContractMapType = {
-  [key: string]: JSON;
+  [key: string]: ethers.ContractInterface
 };
 
 export type SmartContractMetaTransactionMapType = {
-  [key: string]: string;
+  [key: string]: string
 };
 
 export type SmartContractTrustedForwarderMapType = {
-  [key: string]: string;
+  [key: string]: string
 };
+
+export type ForwarderDomainData = {
+  name: string,
+  version: string,
+  verifyingContract: string,
+  salt: string
+};
+
+export enum ContractMetaTransactionType {
+  DEFAULT = 'CUSTOM',
+  EIP2771 = 'TRUSTED_FORWARDER',
+}
+
+export type ForwardRequestType = Array<{
+  name: string,
+  type: string,
+}>;
+
+export type ForwarderDomainType = ForwardRequestType;
 
 export type HandleSendTransactionParamsType = {
-  method: string;
-  params?: Array<any>;
-  fallback: () => Promise<any> | void | undefined;
+  params?: Array<any>
+  fallback: () => Promise<any> | void | undefined
 };
 
+export type FindRightForwarderParamsType = {
+  to: string,
+  smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType,
+  provider: any,
+  forwarderAddresses: Array<string>
+  forwarderAddress: string
+};
 export type SendSingedTransactionParamsType = HandleSendTransactionParamsType;
 
 export interface JsonRpcRequest {
@@ -65,7 +90,4 @@ export interface JsonRpcResponse {
   error?: Error;
 }
 
-export type JsonRpcCallback = (
-  error: Error,
-  response: JsonRpcResponse
-) => unknown;
+export type JsonRpcCallback = (error: Error, response: JsonRpcResponse) => unknown;

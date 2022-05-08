@@ -2,9 +2,9 @@ import { ethers } from 'ethers';
 import { config, RESPONSE_CODES } from '../config';
 import { formatMessage, getFetchOptions, logger } from '../utils';
 import { biconomyForwarderAbi } from '../abis';
-import type { Biconomy } from '..';
 
-const logMessage = logger.getLogger('app');
+import type { Biconomy } from '..';
+import { ContractMetaTransactionType } from '../common/types';
 
 const domainData = {
   name: config.eip712DomainName,
@@ -12,6 +12,7 @@ const domainData = {
   verifyingContract: config.eip712VerifyingContract,
   chainId: 0,
 };
+const logMessage = logger.getLogger('app');
 
 const getDappInfo = async (dappId: string, strictMode: boolean) => {
   try {
@@ -42,17 +43,9 @@ const getDappInfo = async (dappId: string, strictMode: boolean) => {
               const contractInterface = new ethers.utils.Interface(
                 JSON.parse(contract.abi),
               );
-              if (contract.type === config.SCW) {
-                smartContractMetaTransactionMap[config.SCW] = contract.metaTransactionType;
-                interfaceMap[config.SCW] = contractInterface;
-                smartContractMap[config.SCW] = contract.abi;
-              } else {
-                smartContractMetaTransactionMap[
-                  contract.address.toLowerCase()
-                ] = contract.metaTransactionType;
-                interfaceMap[contract.address.toLowerCase()] = contractInterface;
-                smartContractMap[contract.address.toLowerCase()] = contract.abi;
-              }
+              smartContractMetaTransactionMap[contract.address.toLowerCase()] = contract.metaTransactionType;
+              interfaceMap[contract.address.toLowerCase()] = contractInterface;
+              smartContractMap[contract.address.toLowerCase()] = contract.abi;
             },
           );
           logMessage.info(smartContractMetaTransactionMap);
@@ -79,8 +72,17 @@ const getDappInfo = async (dappId: string, strictMode: boolean) => {
   }
 };
 
+// eslint-disable-next-line consistent-return
 export async function getSystemInfo(this: Biconomy, providerNetworkId: number) {
   logMessage.info(`Current provider network id: ${providerNetworkId}`);
+
+  if (!this.dappId) {
+    return {
+      error: 'dappid is undefined ',
+      code: RESPONSE_CODES.DAPP_ID_UNDEFINED,
+    };
+  }
+  const { dappId } = this;
 
   if (providerNetworkId !== this.networkId) {
     const error = formatMessage(
@@ -96,28 +98,26 @@ export async function getSystemInfo(this: Biconomy, providerNetworkId: number) {
     .then((response) => response.json())
     .then(async (systemInfo) => {
       if (systemInfo) {
-        this.domainType = systemInfo.domainType;
         this.forwarderDomainType = systemInfo.forwarderDomainType;
-        this.metaInfoType = systemInfo.metaInfoType;
-        this.relayerPaymentType = systemInfo.relayerPaymentType;
-        this.metaTransactionType = systemInfo.metaTransactionType;
-        this.loginDomainType = systemInfo.loginDomainType;
-        this.loginMessageType = systemInfo.loginMessageType;
-        this.loginDomainData = systemInfo.loginDomainData;
+        // TODO metaInfoType, relayerPaymentType not there system info API on meta entry point
+        // this.metaInfoType = systemInfo.metaInfoType;
+        // this.relayerPaymentType = systemInfo.relayerPaymentType;
+        // TODO metaTransactionType not there, adding
+        // this.metaTransactionType = systemInfo.metaTransactionType;
+        this.defaultMetaTransaction = ContractMetaTransactionType.DEFAULT;
+        this.trustedForwarderMetaTransaction = ContractMetaTransactionType.EIP2771;
         this.forwardRequestType = systemInfo.forwardRequestType;
         this.forwarderDomainData = systemInfo.forwarderDomainData;
         this.forwarderDomainDetails = systemInfo.forwarderDomainDetails;
-        this.trustedForwarderOverhead = systemInfo.overHeadEIP712Sign;
         this.forwarderAddress = systemInfo.biconomyForwarderAddress;
         this.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
-        this.TRUSTED_FORWARDER = systemInfo.trustedForwarderMetaTransaction;
-        this.DEFAULT = systemInfo.defaultMetaTransaction;
-        this.EIP712_SIGN = systemInfo.eip712Sign;
-        this.PERSONAL_SIGN = systemInfo.personalSign;
+        this.eip712Sign = systemInfo.eip712Sign;
+        this.personalSign = systemInfo.personalSign;
 
-        if (systemInfo.relayHubAddress) {
-          domainData.verifyingContract = systemInfo.relayHubAddress;
-        }
+        // CHECK no value relayHubAddress in response of system infp
+        // if (systemInfo.relayHubAddress) {
+        //   domainData.verifyingContract = systemInfo.relayHubAddress;
+        // }
 
         if (this.forwarderAddress && this.forwarderAddress !== '') {
           this.biconomyForwarder = new ethers.Contract(
@@ -127,7 +127,7 @@ export async function getSystemInfo(this: Biconomy, providerNetworkId: number) {
           );
         }
 
-        const dappInfo = await getDsppInfo(this.dappId, this.strictMode);
+        const dappInfo = await getDappInfo(dappId, this.strictMode);
 
         if (dappInfo) {
           this.smartContractMap = dappInfo.smartContractMap;
