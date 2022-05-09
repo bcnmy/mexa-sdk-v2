@@ -14,23 +14,25 @@ export const mexaSdkClientMessenger = async (
 
     await clientMessenger.connect();
     clientMessenger.createTransactionNotifier(transactionId, {
-      onMined: (tx) => {
+      onMined: (tx: { transactionId: any; transactionHash: any; }) => {
         console.log('Tx Hash mined message received at client\n', {
           id: tx.transactionId,
           hash: tx.transactionHash,
         });
       },
-      onHashGenerated: (tx) => {
+      onHashGenerated: (tx: { transactionId: any; transactionHash: any; }) => {
         console.log('Tx Hash generated message received at client\n', {
           id: tx.transactionId,
           hash: tx.transactionHash,
         });
       },
-      onError: (errorResponseData) => {
+      // TODO
+      // Change type in messaging sdk
+      onError: (errorResponseData: { error: any; transactionId: any; }) => {
         console.log('Error message received at client\n');
         console.log(
           {
-            code: errorResponseData.code,
+            // code: errorResponseData.code,
             error: errorResponseData.error,
             transactionId: errorResponseData.transactionId,
           },

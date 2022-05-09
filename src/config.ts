@@ -2,8 +2,8 @@ export const config = {
   SCW: 'SCW',
   metaEntryPointBaseUrl: '',
   metaTxUrl: '',
-  getDappDataUrl: '',
-  getSmartContractsPerDappApiUrl: '',
+  getDappDataUrl: 'http://localhost:4001/api/v1/sdk/dapp',
+  getSmartContractsPerDappApiUrl: 'http://localhost:4001/api/v1/sdk/smart-contract',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
   eip712DomainName: 'Biconomy Meta Transaction',
@@ -56,6 +56,8 @@ export const RESPONSE_CODES = {
   FORWARDER_ADDRESSES_ARRAY_UNDEFINED: 'B526',
   FORWARDER_ADDRESS_UNDEFINED: 'B527',
   CONTRACT_ABI_UNDEFINED: 'B528',
+  FORWARDER_DOMAIN_TYPE_UNDEFINED: 'B529',
+  FORWARDER_REQUEST_TYPE_UNDEFINED: 'B530',
 };
 
 export const BICONOMY_RESPONSE_CODES = {

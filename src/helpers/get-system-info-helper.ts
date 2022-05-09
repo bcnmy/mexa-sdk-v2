@@ -1,11 +1,12 @@
+/* eslint-disable consistent-return */
 import { ethers } from 'ethers';
+import { get } from 'request-promise';
 import {
   config, RESPONSE_CODES,
 } from '../config';
-import { formatMessage, getFetchOptions, logMessage } from '../utils';
+import { formatMessage, logMessage } from '../utils';
 
 import { biconomyForwarderAbi } from '../abis';
-
 import type { Biconomy } from '..';
 import { ContractMetaTransactionType } from '../common/types';
 
@@ -19,22 +20,26 @@ const domainData = {
 const getDappInfo = async (
   dappId: string,
   strictMode: boolean,
+  apiKey: string,
 ) => {
   try {
     let smartContractMetaTransactionMap: any; let interfaceMap: any; let smartContractMap: any;
     const { getSmartContractsPerDappApiUrl } = config;
-    fetch(getSmartContractsPerDappApiUrl, getFetchOptions('GET', dappId))
-      .then((response) => response.json())
-      // eslint-disable-next-line consistent-return
+    console.log('Sending request to get smart contracts');
+    const options = {
+      uri: `${getSmartContractsPerDappApiUrl}/${dappId}`,
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json;charset=utf-8',
+      },
+    };
+
+    get(options)
       .then((result) => {
-        if (!result && result.flag !== 200) {
-          const error = formatMessage(
-            RESPONSE_CODES.SMART_CONTRACT_NOT_FOUND,
-            `Error getting smart contract for dappId ${dappId}`,
-          );
-          return error;
-        }
-        const smartContractList = result.smartContracts;
+        console.log(result);
+        const smartContractResult = JSON.parse(result);
+        const smartContractList = smartContractResult.data.smartContracts;
+        console.log('smartContractList', smartContractList);
         if (smartContractList && smartContractList.length > 0) {
           smartContractList.forEach((contract: {
             abi: string;
@@ -42,7 +47,9 @@ const getDappInfo = async (
             metaTransactionType: any;
             address: string;
           }) => {
+            console.log(contract);
             const contractInterface = new ethers.utils.Interface(JSON.parse(contract.abi));
+            console.log('contractInterface', contractInterface);
             smartContractMetaTransactionMap[
               contract.address.toLowerCase()
             ] = contract.metaTransactionType;
@@ -53,7 +60,9 @@ const getDappInfo = async (
               contract.address.toLowerCase()
             ] = contract.abi;
           });
-          logMessage(smartContractMetaTransactionMap);
+          console.log(smartContractMetaTransactionMap);
+          console.log(interfaceMap);
+          console.log(smartContractMap);
           // _checkUserLogin(engine, dappId);
         } else if (strictMode) {
           const error = formatMessage(
@@ -63,7 +72,7 @@ const getDappInfo = async (
           return error;
         }
       })
-      .catch((error) => error);
+      .catch((error) => console.log(error));
     return {
       smartContractMetaTransactionMap,
       interfaceMap,
@@ -82,13 +91,13 @@ export async function getSystemInfo(
   this: Biconomy,
   providerNetworkId: number,
 ) {
-  logMessage(
+  console.log(
     `Current provider network id: ${providerNetworkId}`,
   );
 
   if (!this.dappId) {
     return {
-      error: 'dappid is undefined ',
+      error: 'dappId is undefined ',
       code: RESPONSE_CODES.DAPP_ID_UNDEFINED,
     };
   }
@@ -101,10 +110,30 @@ export async function getSystemInfo(
     );
     return error;
   }
+
+  const dappInfo = await getDappInfo(
+    dappId,
+    this.strictMode,
+    this.apiKey,
+  );
+
+  if (dappInfo) {
+    this.smartContractMap = dappInfo.smartContractMap;
+    this.smartContractMetaTransactionMap = dappInfo.smartContractMetaTransactionMap;
+    this.interfaceMap = dappInfo.interfaceMap;
+  }
+  console.log('smartContractMap', this.smartContractMap);
+  console.log('smartContractMetaTransactionMap', this.smartContractMetaTransactionMap);
+  console.log('interfaceMap', this.interfaceMap);
+
   domainData.chainId = providerNetworkId;
-  fetch(
-    `${config.metaEntryPointBaseUrl}/api/systemInfo/?networkId=${providerNetworkId}`,
-  )
+  const options = {
+    uri: `${config.metaEntryPointBaseUrl}/api/systemInfo/?networkId=${providerNetworkId}`,
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+  };
+  get(options)
     .then((response) => response.json())
     .then(async (systemInfo) => {
       if (systemInfo) {
@@ -135,17 +164,6 @@ export async function getSystemInfo(
             biconomyForwarderAbi,
             this.ethersProvider,
           );
-        }
-
-        const dappInfo = await getDappInfo(
-          dappId,
-          this.strictMode,
-        );
-
-        if (dappInfo) {
-          this.smartContractMap = dappInfo.smartContractMap;
-          this.smartContractMetaTransactionMap = dappInfo.smartContractMetaTransactionMap;
-          this.interfaceMap = dappInfo.interfaceMap;
         }
       }
       const error = formatMessage(

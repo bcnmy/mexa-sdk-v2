@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import abi from 'ethereumjs-abi';
 import type { Biconomy } from '..';
 import { ForwarderDomainData, ForwarderDomainType, ForwardRequestType } from '../common/types';
+import { RESPONSE_CODES } from '../config';
 
 /**
  * Method to get the signature parameters.
@@ -26,7 +27,7 @@ export const getSignatureParameters = (signature: string) => {
 };
 
 export async function getEIP712ForwardMessageToSign(
-  forwarderDomainDetails: ForwarderDomainData,
+  forwarderDomainDetails: ForwarderDomainData[],
   forwarderDomainType: ForwarderDomainType,
   forwardRequestType: ForwardRequestType,
   request: any,
@@ -63,6 +64,27 @@ export async function getSignatureEIP712(
   domainData: any,
   type: string,
 ) {
+  if (!this.forwarderDomainDetails) {
+    return {
+      error: 'Forwarder domain details is undefined',
+      code: RESPONSE_CODES.FORWARDER_DOMAIN_DETAILS_UNDEFINED,
+    };
+  }
+
+  if (!this.forwarderDomainType) {
+    return {
+      error: 'Forwarder domain type is undefined',
+      code: RESPONSE_CODES.FORWARDER_DOMAIN_TYPE_UNDEFINED,
+    };
+  }
+
+  if (!this.forwardRequestType) {
+    return {
+      error: 'Forwarder request type is undefined',
+      code: RESPONSE_CODES.FORWARDER_REQUEST_TYPE_UNDEFINED,
+    };
+  }
+
   // default V4 now
   let signTypedDataType = 'eth_signTypedData_v4';
   if (type === 'v3' || type === 'V3') {
