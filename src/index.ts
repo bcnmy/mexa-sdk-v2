@@ -1,10 +1,11 @@
+/* eslint-disable consistent-return */
 /**
  * @dev Biconomy class that is the entry point
  */
 import EventEmitter from 'events';
 import { ExternalProvider } from '@ethersproject/providers';
 import { ethers } from 'ethers';
-import fetch from 'node-fetch';
+import { get } from 'request-promise';
 import {
   DappApiMapType,
   ForwarderDomainData,
@@ -19,14 +20,15 @@ import {
   SmartContractTrustedForwarderMapType,
 } from './common/types';
 import {
-  formatMessage, getFetchOptions, logMessage, validateOptions,
+  formatMessage, logMessage, validateOptions,
 } from './utils';
 import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
+// import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 import { getSignatureEIP712, getSignaturePersonal } from './helpers/signature-helpers';
+import { sendTransaction } from './helpers/send-transaction-helper';
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -83,13 +85,15 @@ export class Biconomy extends EventEmitter {
 
   handleSendTransaction = handleSendTransaction;
 
+  sendTransaction = sendTransaction;
+
   sendSignedTransaction = sendSignedTransaction;
 
   getSignatureEIP712 = getSignatureEIP712;
 
   getSignaturePersonal = getSignaturePersonal;
 
-  public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
+  // public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
 
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
@@ -99,7 +103,6 @@ export class Biconomy extends EventEmitter {
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
 
-    // TODO
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
     }
@@ -115,11 +118,11 @@ export class Biconomy extends EventEmitter {
     get: (target: ExternalProvider, prop: string, ...args: any[]) => {
       switch (prop) {
         case 'send':
-          return this.handleRpcSend;
+          return this.handleRpcSend.bind(this);
         case 'sendAsync':
-          return this.handleRpcSendAsync;
+          return this.handleRpcSendAsync.bind(this);
         case 'request':
-          return this.handleRpcRequest;
+          return this.handleRpcRequest.bind(this);
         default:
           break;
       }
@@ -257,31 +260,33 @@ export class Biconomy extends EventEmitter {
    * It fetches the dapp's smart contract from biconomy database
    *  and initialize the decoders for each smart
    * contract which will be used to decode information during function calls.
-   * @param apiKey API key used to authenticate the request at biconomy server
    * */
-  async init(apiKey: string) {
+  async init() {
     try {
-      this.signer = await this.ethersProvider.getSigner();
+      this.signer = this.ethersProvider.getSigner();
       // Check current network id and dapp network id registered on dashboard
       const { getDappDataUrl } = config;
-      fetch(getDappDataUrl, getFetchOptions('GET', apiKey))
-        .then((response) => response.json())
-        // eslint-disable-next-line consistent-return
+      const options = {
+        uri: getDappDataUrl,
+        headers: {
+          'x-api-key': this.apiKey,
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+      };
+      get(options)
         .then(async (response) => {
-          logMessage(JSON.stringify(response));
-          // TODO Review response type
-          const dappData = (response as any).data;
+          const dappData = (JSON.parse(response) as any).data;
           if (dappData && dappData.dapp) {
             this.networkId = dappData.dapp.networkId;
             this.dappId = dappData.dapp._id;
-            logMessage(
+            console.log(
               `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
             );
 
-            let providerNetworkId = await this.ethersProvider.send('eth_chainId', []);
+            let providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
+
             if (providerNetworkId) {
-              providerNetworkId = parseInt(providerNetworkId.toString(), 10);
-              // TODO
+              providerNetworkId = parseInt(providerNetworkId.toString(), 16);
               this.getSystemInfo(providerNetworkId);
             } else {
               return this.emit(
@@ -303,12 +308,13 @@ export class Biconomy extends EventEmitter {
               EVENTS.BICONOMY_ERROR,
               formatMessage(
                 RESPONSE_CODES.DAPP_NOT_FOUND,
-                `No Dapp Registered with apikey ${apiKey}`,
+                `No Dapp Registered with apikey ${this.apiKey}`,
               ),
             );
           }
         })
         .catch((error) => {
+          console.log(error);
           this.emit(
             EVENTS.BICONOMY_ERROR,
             formatMessage(
@@ -319,6 +325,7 @@ export class Biconomy extends EventEmitter {
           );
         });
     } catch (error) {
+      console.log(error);
       this.emit(
         EVENTS.BICONOMY_ERROR,
         formatMessage(

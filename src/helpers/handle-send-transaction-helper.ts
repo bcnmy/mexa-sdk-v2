@@ -107,8 +107,8 @@ export async function handleSendTransaction(
         const api = this.dappApiMap[to][methodName];
         // Information we get here is contractAddress, methodName, methodType, ApiId
         let customBatchId;
-        let customDomainName; let
-          customDomainVersion;
+        let customDomainName;
+        let customDomainVersion;
         let signTypedDataType;
 
         const contractAddress = api.contractAddress.toLowerCase();
@@ -156,9 +156,10 @@ export async function handleSendTransaction(
           logMessage(
             'Falling back to default provider as strict mode is false in biconomy',
           );
-          return {
+          return await fallback();
+          /* return {
             code: 1, // call fallback
-          };
+          }; */
         }
         logMessage('API found');
 

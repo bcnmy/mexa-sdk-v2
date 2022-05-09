@@ -8,7 +8,6 @@ import {
   decodeMethod, formatMessage, logMessage,
 } from '../utils';
 import { findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
-import { sendTransaction } from './send-transaction-helper';
 
 /**
  * Method used to handle transaction initiated using web3.eth.sendSignedTransaction method
@@ -88,7 +87,8 @@ export async function sendSignedTransaction(
     };
   }
 
-  let { params, fallback } = sendSignedTransactionParams;
+  const { fallback } = sendSignedTransactionParams;
+  let { params } = sendSignedTransactionParams;
   if (params && params[0]) {
     const data = params[0];
     let rawTransaction;
@@ -145,8 +145,8 @@ export async function sendSignedTransaction(
             : undefined;
           metaTxApproach = this.smartContractMetaTransactionMap[config.SCW];
         } else {
-          const contractAddr = api.contractAddress.toLowerCase();
-          metaTxApproach = this.smartContractMetaTransactionMap[contractAddr];
+          const contractAddress = api.contractAddress.toLowerCase();
+          metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
         }
         if (!api) {
           logMessage(`API not found for method ${methodName}`);
@@ -164,6 +164,7 @@ export async function sendSignedTransaction(
           if (typeof data === 'object' && data.rawTransaction) {
             params = [data.rawTransaction];
           }
+          await fallback();
         }
         logMessage('API found');
         const paramArray = [];
@@ -261,7 +262,7 @@ export async function sendSignedTransaction(
             to,
             signatureType: signatureType ? this.eip712Sign : this.personalSign,
           };
-          await sendTransaction(this, account, trustedForwarderMetaTransactionData);
+          await this.sendTransaction(account, trustedForwarderMetaTransactionData);
         }
         paramArray.push(...methodInfo.args);
 
@@ -273,11 +274,11 @@ export async function sendSignedTransaction(
           to: decodedTx.to.toLowerCase(),
         };
 
-        await sendTransaction(this, account, defaultMetaTransactionData);
+        await this.sendTransaction(account, defaultMetaTransactionData);
       } else {
         const error = formatMessage(
           RESPONSE_CODES.INVALID_PAYLOAD,
-          'Not able to deode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.',
+          'Not able to decode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.',
         );
         return error;
       }
