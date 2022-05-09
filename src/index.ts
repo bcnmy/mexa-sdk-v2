@@ -118,11 +118,11 @@ export class Biconomy extends EventEmitter {
     get: (target: ExternalProvider, prop: string, ...args: any[]) => {
       switch (prop) {
         case 'send':
-          return this.handleRpcSend;
+          return this.handleRpcSend.bind(this);
         case 'sendAsync':
-          return this.handleRpcSendAsync;
+          return this.handleRpcSendAsync.bind(this);
         case 'request':
-          return this.handleRpcRequest;
+          return this.handleRpcRequest.bind(this);
         default:
           break;
       }
@@ -283,7 +283,8 @@ export class Biconomy extends EventEmitter {
               `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
             );
 
-            let providerNetworkId = await this.ethersProvider.send('eth_chainId', []);
+            let providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
+
             if (providerNetworkId) {
               providerNetworkId = parseInt(providerNetworkId.toString(), 16);
               this.getSystemInfo(providerNetworkId);
