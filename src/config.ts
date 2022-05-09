@@ -1,8 +1,8 @@
 export const config = {
   SCW: 'SCW',
-  metaEntryPointBaseUrl: '',
+  metaEntryPointBaseUrl: 'https://staging-api.biconomy.io',
   metaTxUrl: '',
-  getDappDataUrl: '',
+  getDappDataUrl: 'https://staging-api.biconomy.io/api/v1/dapp',
   getSmartContractsPerDappApiUrl: '',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',

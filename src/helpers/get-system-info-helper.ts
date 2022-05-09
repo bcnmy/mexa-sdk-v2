@@ -113,13 +113,13 @@ export async function getSystemInfo(
   }
   domainData.chainId = providerNetworkId;
   const options = {
-    uri: `${config.metaEntryPointBaseUrl}/api/systemInfo/?networkId=${providerNetworkId}`,
+    uri: `${config.metaEntryPointBaseUrl}/api/v2/meta-tx/systemInfo/?networkId=${providerNetworkId}`,
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
     },
   };
   get(options)
-    .then((response) => response.json())
+    // .then((response) => response.json())
     .then(async (systemInfo) => {
       if (systemInfo) {
         this.forwarderDomainType = systemInfo.forwarderDomainType;

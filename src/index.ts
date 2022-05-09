@@ -118,11 +118,11 @@ export class Biconomy extends EventEmitter {
     get: (target: ExternalProvider, prop: string, ...args: any[]) => {
       switch (prop) {
         case 'send':
-          return this.handleRpcSend;
+          return this.handleRpcSend.bind(this);
         case 'sendAsync':
-          return this.handleRpcSendAsync;
+          return this.handleRpcSendAsync.bind(this);
         case 'request':
-          return this.handleRpcRequest;
+          return this.handleRpcRequest.bind(this);
         default:
           break;
       }
@@ -262,7 +262,7 @@ export class Biconomy extends EventEmitter {
    * contract which will be used to decode information during function calls.
    * @param apiKey API key used to authenticate the request at biconomy server
    * */
-  async init(apiKey: string) {
+  async init() {
     try {
       this.signer = await this.ethersProvider.getSigner();
       // Check current network id and dapp network id registered on dashboard
@@ -270,17 +270,16 @@ export class Biconomy extends EventEmitter {
       const options = {
         uri: getDappDataUrl,
         headers: {
-          'x-api-key': apiKey,
+          'x-api-key': this.apiKey,
           'Content-Type': 'application/json;charset=utf-8',
         },
       };
       get(options)
-        .then((response) => response.json())
         // eslint-disable-next-line consistent-return
         .then(async (response) => {
-          logMessage(JSON.stringify(response));
+          const dappData = JSON.parse(response);
+          // logMessage(JSON.stringify(response));
           // TODO Review response type
-          const dappData = (response as any).data;
           if (dappData && dappData.dapp) {
             this.networkId = dappData.dapp.networkId;
             this.dappId = dappData.dapp._id;
@@ -288,11 +287,12 @@ export class Biconomy extends EventEmitter {
               `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
             );
 
-            let providerNetworkId = await this.ethersProvider.send('eth_chainId', []);
+            let providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
+
             if (providerNetworkId) {
               providerNetworkId = parseInt(providerNetworkId.toString(), 10);
               // TODO
-              this.getSystemInfo(providerNetworkId);
+              await this.getSystemInfo(providerNetworkId);
             } else {
               return this.emit(
                 EVENTS.BICONOMY_ERROR,
@@ -313,7 +313,7 @@ export class Biconomy extends EventEmitter {
               EVENTS.BICONOMY_ERROR,
               formatMessage(
                 RESPONSE_CODES.DAPP_NOT_FOUND,
-                `No Dapp Registered with apikey ${apiKey}`,
+                `No Dapp Registered with apikey ${this.apiKey}`,
               ),
             );
           }
