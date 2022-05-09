@@ -25,7 +25,7 @@ import { config, EVENTS, RESPONSE_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
+// import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 import { getSignatureEIP712, getSignaturePersonal } from './helpers/signature-helpers';
 
 export class Biconomy extends EventEmitter {
@@ -89,7 +89,7 @@ export class Biconomy extends EventEmitter {
 
   getSignaturePersonal = getSignaturePersonal;
 
-  public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
+  // public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
 
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
@@ -99,7 +99,6 @@ export class Biconomy extends EventEmitter {
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
 
-    // TODO
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
     }
@@ -261,7 +260,7 @@ export class Biconomy extends EventEmitter {
    * */
   async init(apiKey: string) {
     try {
-      this.signer = await this.ethersProvider.getSigner();
+      this.signer = this.ethersProvider.getSigner();
       // Check current network id and dapp network id registered on dashboard
       const { getDappDataUrl } = config;
       fetch(getDappDataUrl, getFetchOptions('GET', apiKey))
@@ -281,7 +280,6 @@ export class Biconomy extends EventEmitter {
             let providerNetworkId = await this.ethersProvider.send('eth_chainId', []);
             if (providerNetworkId) {
               providerNetworkId = parseInt(providerNetworkId.toString(), 10);
-              // TODO
               this.getSystemInfo(providerNetworkId);
             } else {
               return this.emit(

@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import abi from 'ethereumjs-abi';
 import type { Biconomy } from '..';
+import { ForwarderDomainData, ForwarderDomainType, ForwardRequestType } from '../common/types';
 
 /**
  * Method to get the signature parameters.
@@ -25,9 +26,9 @@ export const getSignatureParameters = (signature: string) => {
 };
 
 export async function getEIP712ForwardMessageToSign(
-  forwarderDomainDetails: any,
-  forwarderDomainType: any,
-  forwardRequestType: any,
+  forwarderDomainDetails: ForwarderDomainData,
+  forwarderDomainType: ForwarderDomainType,
+  forwardRequestType: ForwardRequestType,
   request: any,
   domainData: any,
 ) {

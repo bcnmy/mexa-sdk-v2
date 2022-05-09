@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import txDecoder from 'ethereum-tx-decoder';
 import { ethers } from 'ethers';
 import abi from 'ethereumjs-abi';
@@ -103,219 +104,241 @@ export const getDomainSeperator = (biconomyForwarderDomainData: any) => {
 };
 
 // TODO discuss if we are to expose
-export async function getForwardRequestAndMessageToSign(
-  this: Biconomy,
-  rawTransaction,
-  customBatchId,
-  customDomainName,
-  customDomainVersion,
-) {
-  try {
-    if (!this.interfaceMap) {
-      return {
-        error: 'Interface Map is undefined',
-        code: RESPONSE_CODES.INTERFACE_MAP_UNDEFINED,
-      };
-    }
+// export async function getForwardRequestAndMessageToSign(
+//   this: Biconomy,
+//   rawTransaction,
+//   customBatchId,
+//   customDomainName,
+//   customDomainVersion,
+// ) {
+//   try {
+//     if (!this.interfaceMap) {
+//       return {
+//         error: 'Interface Map is undefined',
+//         code: RESPONSE_CODES.INTERFACE_MAP_UNDEFINED,
+//       };
+//     }
 
-    if (!this.dappApiMap) {
-      return {
-        error: 'Dapp Api Map is undefined',
-        code: RESPONSE_CODES.DAPP_API_MAP_UNDEFINED,
-      };
-    }
+//     if (!this.dappApiMap) {
+//       return {
+//         error: 'Dapp Api Map is undefined',
+//         code: RESPONSE_CODES.DAPP_API_MAP_UNDEFINED,
+//       };
+//     }
 
-    if (!this.smartContractMetaTransactionMap) {
-      return {
-        error: 'Smart contract meta transaction map is undefined',
-        code: RESPONSE_CODES.SMART_CONTRACT_METATRANSACTION_MAP_UNDEFINED,
-      };
-    }
+//     if (!this.smartContractMetaTransactionMap) {
+//       return {
+//         error: 'Smart contract meta transaction map is undefined',
+//         code: RESPONSE_CODES.SMART_CONTRACT_METATRANSACTION_MAP_UNDEFINED,
+//       };
+//     }
 
-    if (!this.smartContractTrustedForwarderMap) {
-      return {
-        error: 'Smart contract trusted forwarder map is undefined',
-        code: RESPONSE_CODES.SMART_CONTRACT_TRSUTED_FORWARDER_MAP_UNDEFINED,
-      };
-    }
+//     if (!this.smartContractTrustedForwarderMap) {
+//       return {
+//         error: 'Smart contract trusted forwarder map is undefined',
+//         code: RESPONSE_CODES.SMART_CONTRACT_TRSUTED_FORWARDER_MAP_UNDEFINED,
+//       };
+//     }
 
-    if (!this.smartContractMap) {
-      return {
-        error: 'Smart contract map is undefined',
-        code: RESPONSE_CODES.SMART_CONTRACT_MAP_UNDEFINED,
-      };
-    }
+//     if (!this.smartContractMap) {
+//       return {
+//         error: 'Smart contract map is undefined',
+//         code: RESPONSE_CODES.SMART_CONTRACT_MAP_UNDEFINED,
+//       };
+//     }
 
-    if (!this.forwarderDomainData) {
-      return {
-        error: 'Forwarder domain data is undefined',
-        code: RESPONSE_CODES.FORWARDER_DOMAIN_DATA_UNDEFINED,
-      };
-    }
+//     if (!this.forwarderDomainData) {
+//       return {
+//         error: 'Forwarder domain data is undefined',
+//         code: RESPONSE_CODES.FORWARDER_DOMAIN_DATA_UNDEFINED,
+//       };
+//     }
 
-    if (!this.forwarderDomainDetails) {
-      return {
-        error: 'Forwarder domain details is undefined',
-        code: RESPONSE_CODES.FORWARDER_DOMAIN_DETAILS_UNDEFINED,
-      };
-    }
+//     if (!this.forwarderDomainDetails) {
+//       return {
+//         error: 'Forwarder domain details is undefined',
+//         code: RESPONSE_CODES.FORWARDER_DOMAIN_DETAILS_UNDEFINED,
+//       };
+//     }
 
-    if (!this.biconomyForwarder) {
-      return {
-        error: 'Biconomy forwarder contract is undefined',
-        code: RESPONSE_CODES.BICONOMY_FORWARDER_UNDEFINED,
-      };
-    }
+//     if (!this.biconomyForwarder) {
+//       return {
+//         error: 'Biconomy forwarder contract is undefined',
+//         code: RESPONSE_CODES.BICONOMY_FORWARDER_UNDEFINED,
+//       };
+//     }
 
-    if (rawTransaction) {
-      const decodedTx = txDecoder.decodeTx(rawTransaction);
-      if (decodedTx.to && decodedTx.data && decodedTx.value) {
-        const to = decodedTx.to.toLowerCase();
-        const methodInfo = decodeMethod(to, decodedTx.data, this.interfaceMap);
+//     if (!this.forwarderAddresses) {
+//       return {
+//         error: 'Forwarder Addresses array is undefined',
+//         code: RESPONSE_CODES.FORWARDER_ADDRESSES_ARRAY_UNDEFINED,
+//       };
+//     }
 
-        const methodName = methodInfo.name;
+//     if (!this.forwarderAddress) {
+//       return {
+//         error: 'Forwarder Address is undefined',
+//         code: RESPONSE_CODES.FORWARDER_ADDRESS_UNDEFINED,
+//       };
+//     }
 
-        const api = this.dappApiMap[to][methodName];
+//     if (rawTransaction) {
+//       const decodedTx = txDecoder.decodeTx(rawTransaction);
+//       if (decodedTx.to && decodedTx.data && decodedTx.value) {
+//         const to = decodedTx.to.toLowerCase();
+//         const methodInfo = decodeMethod(to, decodedTx.data, this.interfaceMap);
 
-        const contractAddress = api.contractAddress.toLowerCase();
-        const metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
+//         const methodName = methodInfo.name;
 
-        logMessage('API found');
+//         const api = this.dappApiMap[to][methodName];
 
-        const parsedTransaction = ethers.utils.parseTransaction(rawTransaction);
-        const account = parsedTransaction.from;
+//         const contractAddress = api.contractAddress.toLowerCase();
+//         const metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
 
-        logMessage(`Signer is ${account}`);
-        let { gasLimit } = decodedTx;
-        let gasLimitNum;
+//         logMessage('API found');
 
-        if (!gasLimit || parseInt(gasLimit, 10) === 0) {
-          const contractAbi = this.smartContractMap[to];
-          if (contractAbi) {
-            const contract = new ethers.Contract(
-              to,
-              contractAbi,
-              this.ethersProvider,
-            );
-            try {
-              gasLimit = await contract.estimateGas[methodInfo.signature](
-                ...methodInfo.args,
-                { from: account },
-              );
-            } catch (err) {
-              return err;
-            }
-            // Do not send this value in API call. only meant for txGas
-            gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
-              .add(ethers.BigNumber.from(5000))
-              .toNumber();
-            logMessage(`Gas limit number ${gasLimitNum}`);
-          }
-        } else {
-          gasLimitNum = ethers.BigNumber.from(gasLimit.toString()).toNumber();
-        }
+//         const parsedTransaction = ethers.utils.parseTransaction(rawTransaction);
+//         const account = parsedTransaction.from;
 
-        if (!account) {
-          const error = formatMessage(
-            RESPONSE_CODES.ERROR_RESPONSE,
-            'Not able to get user account from signed transaction',
-          );
-          return error;
-        }
+//         logMessage(`Signer is ${account}`);
+//         let { gasLimit } = decodedTx;
+//         let gasLimitNum;
 
-        let request; let cost; let
-          forwarderToUse;
-        if (metaTxApproach === this.trustedForwarderMetaTransaction) {
-          forwarderToUse = await findTheRightForwarder({
-            to,
-            smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
-            ethersProvider: this.ethersProvider,
-            forwarderAddresses: this.forwarderAddresses,
-            forwarderAddress: this.forwarderAddress,
-          });
+//         if (!gasLimit || parseInt(gasLimit, 10) === 0) {
+//           const contractAbi = this.smartContractMap[to];
+//           if (contractAbi) {
+//             const contract = new ethers.Contract(
+//               to,
+//               contractAbi,
+//               this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
+//             );
+//             try {
+//               gasLimit = await contract.estimateGas[methodInfo.signature](
+//                 ...methodInfo.args,
+//                 { from: account },
+//               );
+//             } catch (err) {
+//               return err;
+//             }
+//             // Do not send this value in API call. only meant for txGas
+//             gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
+//               .add(ethers.BigNumber.from(5000))
+//               .toNumber();
+//             logMessage(`Gas limit number ${gasLimitNum}`);
+//           } else {
+//             return {
+//               error: RESPONSE_CODES.CONTRACT_ABI_UNDEFINED,
+//               log: `contract abi not found in smartContractMap for to address: ${to}`,
+//             };
+//           }
+//         } else {
+//           gasLimitNum = ethers.BigNumber.from(gasLimit.toString()).toNumber();
+//         }
 
-          // Attach the forwarder with right address
+//         if (!account) {
+//           const error = formatMessage(
+//             RESPONSE_CODES.ERROR_RESPONSE,
+//             'Not able to get user account from signed transaction',
+//           );
+//           return error;
+//         }
 
-          request = (
-            await buildForwardTxRequest(
-              account,
-              to,
-              gasLimitNum,
-              decodedTx.data,
-              this.biconomyForwarder.attach(forwarderToUse),
-              customBatchId,
-            )
-          ).request;
-        } else {
-          const error = formatMessage(
-            RESPONSE_CODES.INVALID_OPERATION,
-            'Smart contract is not registered in the dashboard for this meta transaction approach. Kindly use biconomy.getUserMessageToSign',
-          );
-          return error;
-        }
+//         let request; let cost; let
+//           forwarderToUse;
+//         if (metaTxApproach === this.trustedForwarderMetaTransaction) {
+//           forwarderToUse = await findTheRightForwarder({
+//             to,
+//             smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
+//             provider: this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
+//             forwarderAddresses: this.forwarderAddresses,
+//             forwarderAddress: this.forwarderAddress,
+//           });
 
-        // Update the verifyingContract field of domain data based on the current request
-        this.forwarderDomainData.verifyingContract = forwarderToUse;
-        const domainDataToUse = this.forwarderDomainDetails[parseInt(forwarderToUse, 10)];
+//           // Attach the forwarder with right address
 
-        if (customDomainName) {
-          domainDataToUse.name = customDomainName.toString();
-        }
+//           request = (
+//             await buildForwardTxRequest(
+//               account,
+//               to,
+//               gasLimitNum,
+//               decodedTx.data,
+//               this.biconomyForwarder.attach(forwarderToUse),
+//               customBatchId,
+//             )
+//           ).request;
+//         } else {
+//           const error = formatMessage(
+//             RESPONSE_CODES.INVALID_OPERATION,
+//             'Smart contract is not registered
+//  in the dashboard for this meta transaction approach. Kindly use biconomy.getUserMessageToSign',
+//           );
+//           return error;
+//         }
 
-        if (customDomainVersion) {
-          domainDataToUse.version = customDomainVersion.toString();
-        }
+//         // Update the verifyingContract field of domain data based on the current request
+//         this.forwarderDomainData.verifyingContract = forwarderToUse;
+//         const domainDataToUse = this.forwarderDomainDetails[parseInt(forwarderToUse, 10)];
 
-        const eip712DataToSign = {
-          types: {
-            EIP712Domain: this.forwarderDomainType,
-            ERC20ForwardRequest: this.forwardRequestType,
-          },
-          domain: domainDataToUse,
-          primaryType: 'ERC20ForwardRequest',
-          message: request,
-        };
+//         if (customDomainName) {
+//           domainDataToUse.name = customDomainName.toString();
+//         }
 
-        const hashToSign = abi.soliditySHA3(
-          [
-            'address',
-            'address',
-            'address',
-            'uint256',
-            'uint256',
-            'uint256',
-            'uint256',
-            'uint256',
-            'bytes32',
-          ],
-          [
-            request.from,
-            request.to,
-            request.token,
-            request.txGas,
-            request.tokenGasPrice,
-            request.batchId,
-            request.batchNonce,
-            request.deadline,
-            ethers.utils.keccak256(request.data),
-          ],
-        );
+//         if (customDomainVersion) {
+//           domainDataToUse.version = customDomainVersion.toString();
+//         }
 
-        const dataToSign = {
-          eip712Format: eip712DataToSign,
-          personalSignatureFormat: hashToSign,
-          request,
-          cost,
-        };
-        return dataToSign;
-      }
-      const error = formatMessage(
-        RESPONSE_CODES.BICONOMY_NOT_INITIALIZED,
-        'Decoders not initialized properly in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard',
-      );
-      return error;
-    }
-  } catch (error) {
-    throw new Error(`Something went wrong in getForwardRequestAndMessageToSign(). Error message: ${JSON.stringify(error)}`);
-  }
-}
+//         const eip712DataToSign = {
+//           types: {
+//             EIP712Domain: this.forwarderDomainType,
+//             ERC20ForwardRequest: this.forwardRequestType,
+//           },
+//           domain: domainDataToUse,
+//           primaryType: 'ERC20ForwardRequest',
+//           message: request,
+//         };
+
+//         const hashToSign = abi.soliditySHA3(
+//           [
+//             'address',
+//             'address',
+//             'address',
+//             'uint256',
+//             'uint256',
+//             'uint256',
+//             'uint256',
+//             'uint256',
+//             'bytes32',
+//           ],
+//           [
+//             request.from,
+//             request.to,
+//             request.token,
+//             request.txGas,
+//             request.tokenGasPrice,
+//             request.batchId,
+//             request.batchNonce,
+//             request.deadline,
+//             ethers.utils.keccak256(request.data),
+//           ],
+//         );
+
+//         const dataToSign = {
+//           eip712Format: eip712DataToSign,
+//           personalSignatureFormat: hashToSign,
+//           request,
+//           cost,
+//         };
+//         return dataToSign;
+//       }
+//       const error = formatMessage(
+//         RESPONSE_CODES.BICONOMY_NOT_INITIALIZED,
+//         'Decoders not initialized properly in mexa sdk.
+// Make sure your have smart contracts registered on Mexa Dashboard',
+//       );
+//       return error;
+//     }
+//   } catch (error) {
+//     throw new Error(`Something went wrong in
+// getForwardRequestAndMessageToSign(). Error message: ${JSON.stringify(error)}`);
+//   }
+// }

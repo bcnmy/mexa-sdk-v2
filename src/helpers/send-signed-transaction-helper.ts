@@ -88,7 +88,7 @@ export async function sendSignedTransaction(
     };
   }
 
-  let { params, fallback } = sendSignedTransactionParams;
+  let { params } = sendSignedTransactionParams;
   if (params && params[0]) {
     const data = params[0];
     let rawTransaction;
@@ -145,8 +145,8 @@ export async function sendSignedTransaction(
             : undefined;
           metaTxApproach = this.smartContractMetaTransactionMap[config.SCW];
         } else {
-          const contractAddr = api.contractAddress.toLowerCase();
-          metaTxApproach = this.smartContractMetaTransactionMap[contractAddr];
+          const contractAddress = api.contractAddress.toLowerCase();
+          metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
         }
         if (!api) {
           logMessage(`API not found for method ${methodName}`);
@@ -277,7 +277,7 @@ export async function sendSignedTransaction(
       } else {
         const error = formatMessage(
           RESPONSE_CODES.INVALID_PAYLOAD,
-          'Not able to deode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.',
+          'Not able to decode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.',
         );
         return error;
       }

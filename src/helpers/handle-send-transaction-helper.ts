@@ -88,7 +88,7 @@ export async function handleSendTransaction(
     }
 
     const {
-      params, fallback,
+      params,
     } = handleSendTransactionParams;
 
     if (params && params[0] && params[0].to) {
@@ -107,8 +107,8 @@ export async function handleSendTransaction(
         const api = this.dappApiMap[to][methodName];
         // Information we get here is contractAddress, methodName, methodType, ApiId
         let customBatchId;
-        let customDomainName; let
-          customDomainVersion;
+        let customDomainName;
+        let customDomainVersion;
         let signTypedDataType;
 
         const contractAddress = api.contractAddress.toLowerCase();
