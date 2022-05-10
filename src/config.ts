@@ -3,7 +3,6 @@ export const config = {
   metaEntryPointBaseUrl: 'https://staging-api.biconomy.io',
   metaTxUrl: '',
   getDappDataUrl: 'http://localhost:4001/api/v1/sdk/dapp',
-  getSmartContractsPerDappApiUrl: 'http://localhost:4001/api/v1/sdk/smart-contract',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
   eip712DomainName: 'Biconomy Meta Transaction',

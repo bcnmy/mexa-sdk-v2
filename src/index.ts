@@ -41,13 +41,13 @@ export class Biconomy extends EventEmitter {
 
   dappApiMap?: DappApiMapType;
 
-  interfaceMap?: InterfaceMapType;
+  interfaceMap: InterfaceMapType = {};
 
-  smartContractMap?: SmartContractMapType;
+  smartContractMap: SmartContractMapType = {};
 
-  smartContractMetaTransactionMap?: SmartContractMetaTransactionMapType;
+  smartContractMetaTransactionMap: SmartContractMetaTransactionMapType = {};
 
-  smartContractTrustedForwarderMap?: SmartContractTrustedForwarderMapType;
+  smartContractTrustedForwarderMap: SmartContractTrustedForwarderMapType = {};
 
   strictMode = false;
 
@@ -264,77 +264,74 @@ export class Biconomy extends EventEmitter {
   async init() {
     try {
       this.signer = this.ethersProvider.getSigner();
-      // Check current network id and dapp network id registered on dashboard
-      const { getDappDataUrl } = config;
-      const options = {
-        uri: getDappDataUrl,
-        headers: {
-          'x-api-key': this.apiKey,
-          'Content-Type': 'application/json;charset=utf-8',
-        },
-      };
-      get(options)
-        .then(async (response) => {
-          const dappData = (JSON.parse(response) as any).data;
-          if (dappData && dappData.dapp) {
-            this.networkId = dappData.dapp.networkId;
-            this.dappId = dappData.dapp._id;
-            console.log(
+      await this.getDappData();
+      const providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
+
+      if (providerNetworkId) {
+        if (providerNetworkId !== this.networkId) {
+          return new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
+        }
+        await this.getSystemInfo(providerNetworkId);
+      } else {
+        return new Error('Could not get network version');
+      }
+    } catch (error) {
+      return error;
+    }
+  }
+
+  async getDappData() {
+    return new Promise((resolve, reject) => {
+      try {
+        const { getDappDataUrl } = config;
+        const options = {
+          uri: getDappDataUrl,
+          headers: {
+            'x-api-key': this.apiKey,
+            'Content-Type': 'application/json;charset=utf-8',
+          },
+        };
+        get(options)
+          .then(async (response) => {
+            const { data } = JSON.parse(response);
+            if (data.code !== 200) {
+              reject(data.error);
+            }
+            const { dapp, smartContracts } = data;
+
+            this.networkId = dapp.networkId;
+            this.dappId = dapp._id;
+
+            if (smartContracts && smartContracts.length > 0) {
+              smartContracts.forEach((contract: {
+                abi: string;
+                type: string;
+                metaTransactionType: any;
+                address: string;
+              }) => {
+                const contractInterface = new ethers.utils.Interface(JSON.parse(contract.abi));
+                this.smartContractMetaTransactionMap[
+                  contract.address.toLowerCase()
+                ] = contract.metaTransactionType;
+                this.interfaceMap[
+                  contract.address.toLowerCase()
+                ] = contractInterface;
+                this.smartContractMap[
+                  contract.address.toLowerCase()
+                ] = contract.abi;
+              });
+            }
+            logMessage(
               `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
             );
-
-            let providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
-
-            if (providerNetworkId) {
-              providerNetworkId = parseInt(providerNetworkId.toString(), 16);
-              this.getSystemInfo(providerNetworkId);
-            } else {
-              return this.emit(
-                EVENTS.BICONOMY_ERROR,
-                formatMessage(
-                  RESPONSE_CODES.NETWORK_ID_NOT_FOUND,
-                  'Could not get network version',
-                ),
-                'Could not get network version',
-              );
-            }
-          } else if (dappData.error) {
-            this.emit(
-              EVENTS.BICONOMY_ERROR,
-              formatMessage(RESPONSE_CODES.ERROR_RESPONSE, dappData.error),
-            );
-          } else {
-            this.emit(
-              EVENTS.BICONOMY_ERROR,
-              formatMessage(
-                RESPONSE_CODES.DAPP_NOT_FOUND,
-                `No Dapp Registered with apikey ${this.apiKey}`,
-              ),
-            );
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          this.emit(
-            EVENTS.BICONOMY_ERROR,
-            formatMessage(
-              RESPONSE_CODES.ERROR_RESPONSE,
-              'Error while initializing Biconomy',
-            ),
-            error,
-          );
-        });
-    } catch (error) {
-      console.log(error);
-      this.emit(
-        EVENTS.BICONOMY_ERROR,
-        formatMessage(
-          RESPONSE_CODES.ERROR_RESPONSE,
-          'Error while initializing Biconomy',
-        ),
-        error,
-      );
-    }
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   private setSmartContractMetaTransactionMap(newSmartContractMetatransactionMap: any) {
