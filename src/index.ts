@@ -14,15 +14,17 @@ import {
   InterfaceMapType,
   JsonRpcCallback,
   JsonRpcRequest,
+  MetaApiType,
   OptionsType,
   SmartContractMapType,
   SmartContractMetaTransactionMapType,
   SmartContractTrustedForwarderMapType,
+  SmartContractType,
 } from './common/types';
 import {
-  formatMessage, logMessage, validateOptions,
+  logMessage, validateOptions,
 } from './utils';
-import { config, EVENTS, RESPONSE_CODES } from './config';
+import { config } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
@@ -39,7 +41,7 @@ export class Biconomy extends EventEmitter {
 
   provider: ExternalProvider;
 
-  dappApiMap?: DappApiMapType;
+  dappApiMap: DappApiMapType = {};
 
   interfaceMap: InterfaceMapType = {};
 
@@ -269,11 +271,11 @@ export class Biconomy extends EventEmitter {
 
       if (providerNetworkId) {
         if (providerNetworkId !== this.networkId) {
-          return new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
+          throw new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
         }
         await this.getSystemInfo(providerNetworkId);
       } else {
-        return new Error('Could not get network version');
+        throw new Error('Could not get network version');
       }
     } catch (error) {
       return error;
@@ -281,57 +283,50 @@ export class Biconomy extends EventEmitter {
   }
 
   async getDappData() {
-    return new Promise((resolve, reject) => {
-      try {
-        const { getDappDataUrl } = config;
-        const options = {
-          uri: getDappDataUrl,
-          headers: {
-            'x-api-key': this.apiKey,
-            'Content-Type': 'application/json;charset=utf-8',
-          },
-        };
-        get(options)
-          .then(async (response) => {
-            const { data } = JSON.parse(response);
-            if (data.code !== 200) {
-              reject(data.error);
-            }
-            const { dapp, smartContracts } = data;
+    try {
+      const { getDappDataUrl } = config;
+      const options = {
+        uri: getDappDataUrl,
+        headers: {
+          'x-api-key': this.apiKey,
+          'Content-Type': 'application/json;charset=utf-8',
+        },
+      };
+      const response = await get(options);
+      const { data } = JSON.parse(response);
 
-            this.networkId = dapp.networkId;
-            this.dappId = dapp._id;
-
-            if (smartContracts && smartContracts.length > 0) {
-              smartContracts.forEach((contract: {
-                abi: string;
-                type: string;
-                metaTransactionType: any;
-                address: string;
-              }) => {
-                const contractInterface = new ethers.utils.Interface(JSON.parse(contract.abi));
-                this.smartContractMetaTransactionMap[
-                  contract.address.toLowerCase()
-                ] = contract.metaTransactionType;
-                this.interfaceMap[
-                  contract.address.toLowerCase()
-                ] = contractInterface;
-                this.smartContractMap[
-                  contract.address.toLowerCase()
-                ] = contract.abi;
-              });
-            }
-            logMessage(
-              `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
-            );
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      } catch (error) {
-        reject(error);
+      if (response.code !== 200) {
+        throw new Error(data.log);
       }
-    });
+
+      const { dapp, smartContracts, metaApis } = data;
+      this.networkId = dapp.networkId;
+      this.dappId = dapp._id;
+
+      if (smartContracts && smartContracts.length > 0) {
+        smartContracts.forEach((contract: SmartContractType) => {
+          const contractInterface = new ethers.utils.Interface(JSON.parse(contract.abi.toString()));
+          this.smartContractMetaTransactionMap[
+            contract.address.toLowerCase()
+          ] = contract.metaTransactionType;
+          this.interfaceMap[
+            contract.address.toLowerCase()
+          ] = contractInterface;
+          this.smartContractMap[
+            contract.address.toLowerCase()
+          ] = contract.abi.toString();
+        });
+      }
+      if (metaApis && metaApis.length > 0) {
+        metaApis.forEach((metaApi: MetaApiType) => {
+          const { contractAddress } = metaApi;
+          this.dappApiMap[contractAddress][metaApi.method] = metaApi;
+        });
+      }
+    } catch (error) {
+      logMessage(JSON.stringify(error));
+      throw error;
+    }
   }
 
   private setSmartContractMetaTransactionMap(newSmartContractMetatransactionMap: any) {
