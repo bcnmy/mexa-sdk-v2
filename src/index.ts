@@ -283,12 +283,12 @@ export class Biconomy extends EventEmitter {
               `Network id corresponding to dapp id ${this.dappId} is ${this.networkId}`,
             );
 
-            let providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
+            const providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
 
             if (providerNetworkId) {
-              providerNetworkId = parseInt(providerNetworkId.toString(), 16);
-              this.getSystemInfo(providerNetworkId);
+              await this.getSystemInfo(providerNetworkId);
             } else {
+              // Marked for removal
               return this.emit(
                 EVENTS.BICONOMY_ERROR,
                 formatMessage(
@@ -315,6 +315,7 @@ export class Biconomy extends EventEmitter {
         })
         .catch((error) => {
           console.log(error);
+          // Marked for removal
           this.emit(
             EVENTS.BICONOMY_ERROR,
             formatMessage(
@@ -326,6 +327,7 @@ export class Biconomy extends EventEmitter {
         });
     } catch (error) {
       console.log(error);
+      // Marked for removal
       this.emit(
         EVENTS.BICONOMY_ERROR,
         formatMessage(
