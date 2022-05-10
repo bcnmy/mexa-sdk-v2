@@ -5,7 +5,7 @@ import type { Biconomy } from '..';
 import { SendSingedTransactionParamsType } from '../common/types';
 import { config, RESPONSE_CODES } from '../config';
 import {
-  decodeMethod, formatMessage, logMessage,
+  decodeMethod, logMessage, formatMessage,
 } from '../utils';
 import { findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 

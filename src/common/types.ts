@@ -91,3 +91,16 @@ export interface JsonRpcResponse {
 }
 
 export type JsonRpcCallback = (error: Error, response: JsonRpcResponse) => unknown;
+
+export type SmartContractType = {
+  _id?: Object,
+  dappId: Types.ObjectId,
+  name: string,
+  abi: JSON,
+  type: string,
+  walletType: string,
+  metaTransactionType: string,
+  address: string,
+  createdOn: number,
+  createdBy: Types.ObjectId,
+};

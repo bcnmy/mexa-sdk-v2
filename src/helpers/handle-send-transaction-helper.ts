@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { HandleSendTransactionParamsType } from '../common/types';
 import { RESPONSE_CODES } from '../config';
-import { decodeMethod, formatMessage, logMessage } from '../utils';
+import { decodeMethod, logMessage } from '../utils';
 import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 import type { Biconomy } from '..';
 
@@ -18,73 +18,43 @@ export async function handleSendTransaction(
 ) {
   try {
     if (!this.interfaceMap) {
-      return {
-        error: 'Interface Map is undefined',
-        code: RESPONSE_CODES.INTERFACE_MAP_UNDEFINED,
-      };
+      throw new Error('Interface Map is undefined');
     }
 
     if (!this.dappApiMap) {
-      return {
-        error: 'Dapp Api Map is undefined',
-        code: RESPONSE_CODES.DAPP_API_MAP_UNDEFINED,
-      };
+      throw new Error('Dapp Api Map is undefined');
     }
 
     if (!this.smartContractMetaTransactionMap) {
-      return {
-        error: 'Smart contract meta transaction map is undefined',
-        code: RESPONSE_CODES.SMART_CONTRACT_METATRANSACTION_MAP_UNDEFINED,
-      };
+      throw new Error('Smart contract meta transaction map is undefined');
     }
 
     if (!this.smartContractTrustedForwarderMap) {
-      return {
-        error: 'Smart contract trusted forwarder map is undefined',
-        code: RESPONSE_CODES.SMART_CONTRACT_TRSUTED_FORWARDER_MAP_UNDEFINED,
-      };
+      throw new Error('Smart contract trusted forwarder map is undefined');
     }
 
     if (!this.smartContractMap) {
-      return {
-        error: 'Smart contract map is undefined',
-        code: RESPONSE_CODES.SMART_CONTRACT_MAP_UNDEFINED,
-      };
+      throw new Error('Smart contract map is undefined');
     }
 
     if (!this.forwarderDomainData) {
-      return {
-        error: 'Forwarder domain data is undefined',
-        code: RESPONSE_CODES.FORWARDER_DOMAIN_DATA_UNDEFINED,
-      };
+      throw new Error('Forwarder domain data is undefined');
     }
 
     if (!this.forwarderDomainDetails) {
-      return {
-        error: 'Forwarder domain details is undefined',
-        code: RESPONSE_CODES.FORWARDER_DOMAIN_DETAILS_UNDEFINED,
-      };
+      throw new Error('Forwarder domain details is undefined');
     }
 
     if (!this.biconomyForwarder) {
-      return {
-        error: 'Biconomy forwarder contract is undefined',
-        code: RESPONSE_CODES.BICONOMY_FORWARDER_UNDEFINED,
-      };
+      throw new Error('Biconomy forwarder contract is undefined');
     }
 
     if (!this.forwarderAddresses) {
-      return {
-        error: 'Forwarder Addresses array is undefined',
-        code: RESPONSE_CODES.FORWARDER_ADDRESSES_ARRAY_UNDEFINED,
-      };
+      throw new Error('Forwarder Addresses array is undefined');
     }
 
     if (!this.forwarderAddress) {
-      return {
-        error: 'Forwarder Address is undefined',
-        code: RESPONSE_CODES.FORWARDER_ADDRESS_UNDEFINED,
-      };
+      throw new Error('Forwarder Address is undefined');
     }
 
     const {
@@ -97,11 +67,7 @@ export async function handleSendTransaction(
         const methodInfo = decodeMethod(to, params[0].data, this.interfaceMap);
 
         if (!methodInfo) {
-          const error = {
-            code: RESPONSE_CODES.WRONG_ABI,
-            message: 'Can\'t decode method information from payload. Make sure you have uploaded correct ABI on Biconomy Dashboard',
-          };
-          return error;
+          throw new Error('Can\'t decode method information from payload. Make sure you have uploaded correct ABI on Biconomy Dashboard');
         }
         const methodName = methodInfo.name;
         const api = this.dappApiMap[to][methodName];
@@ -147,19 +113,12 @@ export async function handleSendTransaction(
           logMessage(`API not found for method ${methodName}`);
           logMessage(`Strict mode ${this.strictMode}`);
           if (this.strictMode) {
-            const error = {
-              code: RESPONSE_CODES.API_NOT_FOUND,
-              message: `Biconomy strict mode is on. No registered API found for method ${methodName}. Please register API from developer dashboard.`,
-            };
-            return error;
+            throw new Error(`Biconomy strict mode is on. No registered API found for method ${methodName}. Please register API from developer dashboard.`);
           }
           logMessage(
             'Falling back to default provider as strict mode is false in biconomy',
           );
           return await fallback();
-          /* return {
-            code: 1, // call fallback
-          }; */
         }
         logMessage('API found');
 
@@ -167,9 +126,7 @@ export async function handleSendTransaction(
         const account = params[0].from;
 
         if (!account) {
-          return {
-            message: 'Not able to get user account',
-          };
+          throw new Error('Not able to get user account');
         }
         logMessage('User account fetched');
 
@@ -205,11 +162,7 @@ export async function handleSendTransaction(
 
               logMessage(`Gas limit (txGas) calculated for method ${methodName} in SDK: ${gasLimitNum}`);
             } else {
-              const error = formatMessage(
-                RESPONSE_CODES.SMART_CONTRACT_NOT_FOUND,
-                'Smart contract ABI not found!',
-              );
-              return error;
+              throw new Error('Smart contract ABI not found!');
             }
           } else {
             logMessage(`txGas supplied for this Trusted Forwarder call is ${Number(txGas)}`);
@@ -333,33 +286,18 @@ export async function handleSendTransaction(
             data,
           },
         };
-        const error = formatMessage(
-          RESPONSE_CODES.INVALID_OPERATION,
-          'Biconomy smart contract wallets are not supported now. On dashboard, re-register your smart contract methods with "native meta tx" checkbox selected.',
-        );
-        return error;
       }
       if (this.strictMode) {
-        const error = formatMessage(
-          RESPONSE_CODES.BICONOMY_NOT_INITIALIZED,
-          'Decoders not initialized properly in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard',
-        );
-        return error;
+        throw new Error('Decoders not initialized properly in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard');
       }
       logMessage(
         'Smart contract not found on dashbaord. Strict mode is off, so falling back to normal transaction mode',
       );
-      return {
-        code: 1, // call fallback
-      };
+      return await fallback();
     }
-    const error = formatMessage(
-      RESPONSE_CODES.INVALID_PAYLOAD,
-      `Invalid payload data ${JSON.stringify(
-        params,
-      )}. Expecting params key to be an array with first element having a 'to' property`,
-    );
-    return error;
+    throw new Error(`Invalid payload data ${JSON.stringify(
+      params,
+    )}. Expecting params key to be an array with first element having a 'to' property`);
   } catch (error) {
     return error;
   }
