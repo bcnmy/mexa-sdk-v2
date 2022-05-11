@@ -1,6 +1,8 @@
+// TODO
+// Review and update URLs
 export const config = {
   SCW: 'SCW',
-  metaEntryPointBaseUrl: 'https://staging-api.biconomy.io',
+  metaEntryPointBaseUrl: 'http://localhost:3000',
   metaTxUrl: '',
   getDappDataUrl: 'http://localhost:4001/api/v1/sdk/dapp',
   JSON_RPC_VERSION: '2.0',

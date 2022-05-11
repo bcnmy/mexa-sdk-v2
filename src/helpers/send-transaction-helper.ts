@@ -11,46 +11,39 @@ import { logMessage } from '../utils';
  * @param data Data to be sent to biconomy server having transaction data
  * */
 export async function sendTransaction(this: Biconomy, account: string, data: any) {
-  if (this && account && data) {
-    const { metaEntryPointBaseUrl } = config;
-
-    const options = {
-      uri: metaEntryPointBaseUrl,
-      headers: {
-        'x-api-key': this.apiKey,
-        'Content-Type': 'application/json;charset=utf-8',
-      },
-      body: JSON.stringify(data),
-    };
-
-    post(options)
-      .then((response: any) => response.json())
-      .then((result: any) => {
-        logMessage(result);
-        if (
-          !result.txHash
-            && result.flag !== BICONOMY_RESPONSE_CODES.ACTION_COMPLETE
-            && result.flag !== BICONOMY_RESPONSE_CODES.SUCCESS
-        ) {
-          // Any error from relayer infra
-          // TODO
-          // Involve fallback here with callDefaultProvider
-          const error:any = {};
-          error.code = result.flag || result.code;
-          if (result.flag === BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
-            error.code = RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;
-          }
-          error.message = result.log || result.message;
-        } else {
-          // TODO add code
-        }
-      })
-      .catch((error) => {
-        logMessage(error);
-      });
-  } else {
-    logMessage(
-      `Invalid arguments, provider: ${this} account: ${account} data: ${data}`,
-    );
+  if (!this || !account || !data) {
+    return undefined;
   }
+
+  const options = {
+    uri: `${config.metaEntryPointBaseUrl}/api/v2/meta-tx/native`,
+    headers: {
+      'x-api-key': this.apiKey,
+      'Content-Type': 'application/json;charset=utf-8',
+    },
+    timeout: 600000, // 10 min
+    body: JSON.stringify(data),
+  };
+
+  logMessage('request body');
+  logMessage(JSON.stringify(data));
+
+  const response = await post(options);
+  logMessage(response);
+  const result = JSON.parse(response);
+
+  if (result.txHash && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {
+    return result.txHash;
+  }
+
+  // Any error from relayer infra
+  // TODO
+  // Involve fallback here with callDefaultProvider
+  const error:any = {};
+  error.code = result.flag || result.code;
+  if (result.flag === BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
+    error.code = RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;
+  }
+  error.message = result.log || result.message;
+  return error.toString();
 }

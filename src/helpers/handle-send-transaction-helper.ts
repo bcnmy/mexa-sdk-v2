@@ -71,6 +71,7 @@ export async function handleSendTransaction(
         }
         const methodName = methodInfo.name;
         const api = this.dappApiMap[`${to}-${methodName}`];
+        logMessage('api found');
         // Information we get here is contractAddress, methodName, methodType, ApiId
         let customBatchId;
         let customDomainName;
@@ -131,10 +132,10 @@ export async function handleSendTransaction(
         logMessage('User account fetched');
 
         logMessage(methodInfo.args);
-        const paramArray = [];
+        const paramArray:Array<any> = [];
 
-        let forwardedData; let
-          gasLimitNum;
+        let forwardedData;
+        let gasLimitNum;
 
         if (metaTxApproach === this.trustedForwarderMetaTransaction) {
           logMessage('Smart contract is configured to use Trusted Forwarder as meta transaction type');
@@ -277,7 +278,10 @@ export async function handleSendTransaction(
           to,
         };
 
-        return {
+        const hash = await this.sendTransaction(account, data);
+        return hash;
+
+        /* return {
           code: RESPONSE_CODES.SUCCESS_RESPONSE,
           message: 'Success',
           data: {
@@ -285,19 +289,21 @@ export async function handleSendTransaction(
             api,
             data,
           },
-        };
+        }; */
       }
-      if (this.strictMode) {
-        throw new Error('Decoders not initialized properly in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard');
+      /* if (this.strictMode) {
+        throw new Error('Decoders not initialized properly
+        in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard');
       }
       logMessage(
-        'Smart contract not found on dashbaord. Strict mode is off, so falling back to normal transaction mode',
+        'Smart contract not found on dashbaord.
+        Strict mode is off, so falling back to normal transaction mode',
       );
-      return await fallback();
+      return await fallback(); */
     }
-    throw new Error(`Invalid payload data ${JSON.stringify(
+    /* throw new Error(`Invalid payload data ${JSON.stringify(
       params,
-    )}. Expecting params key to be an array with first element having a 'to' property`);
+    )}. Expecting params key to be an array with first element having a 'to' property`); */
   } catch (error) {
     return error;
   }

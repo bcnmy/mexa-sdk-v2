@@ -24,14 +24,18 @@ export async function getSystemInfo(
 ) {
   domainData.chainId = providerNetworkId;
   const options = {
-    uri: `${config.metaEntryPointBaseUrl}/api/v2/meta-tx/systemInfo/?networkId=${providerNetworkId}`,
+    // TODO
+    // Review Uri backwards compatibility
+    uri: `${config.metaEntryPointBaseUrl}/api/v1/systemInfo/?networkId=${providerNetworkId}`,
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
     },
   };
   get(options)
-    .then(async (systemInfo) => {
-      if (systemInfo) {
+    .then(async (response) => {
+      const result = JSON.parse(response);
+      if (result.response.code === '200' && result.response.data) {
+        const systemInfo = result.response.data;
         this.forwarderDomainType = systemInfo.forwarderDomainType;
         this.defaultMetaTransaction = ContractMetaTransactionType.DEFAULT;
         this.trustedForwarderMetaTransaction = ContractMetaTransactionType.EIP2771;

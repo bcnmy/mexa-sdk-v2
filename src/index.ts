@@ -132,15 +132,15 @@ export class Biconomy extends EventEmitter {
     },
   };
 
-  async handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback) {
+  handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback) {
     const fallback = () => this.externalProvider.send?.(payload, callback);
     const { method, params } = payload;
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ params, fallback });
+          return this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ params, fallback });
+          return this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -149,7 +149,7 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  async handleRpcSendType2(method: string, params?: Array<unknown>) {
+  handleRpcSendType2(method: string, params?: Array<unknown>) {
     // need to use ts-ignore because ethers externalProvider
     // type does not have full coverage of send method
 
@@ -158,9 +158,9 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ params, fallback });
+          return this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ params, fallback });
+          return this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -169,7 +169,7 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  async handleRpcSendType3(payload: JsonRpcRequest) {
+  handleRpcSendType3(payload: JsonRpcRequest) {
     // need to use ts-ignore because ethers externalProvider
     // type does not have full coverage of send method
 
@@ -179,9 +179,9 @@ export class Biconomy extends EventEmitter {
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ params, fallback });
+          return this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ params, fallback });
+          return this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -222,16 +222,16 @@ export class Biconomy extends EventEmitter {
     return this.handleRpcSendType1(args[0] as JsonRpcRequest, args[1] as JsonRpcCallback);
   }
 
-  async handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback) {
+  handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback) {
     const fallback = () => this.externalProvider.sendAsync?.(payload, callback);
 
     const { method, params } = payload;
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return await this.handleSendTransaction({ params, fallback });
+          return this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return await this.sendSignedTransaction({ params, fallback });
+          return this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -315,7 +315,7 @@ export class Biconomy extends EventEmitter {
       if (metaApis && metaApis.length > 0) {
         metaApis.forEach((metaApi: MetaApiType) => {
           const { contractAddress, method } = metaApi;
-          this.dappApiMap[`${contractAddress}-${method}`] = metaApi;
+          this.dappApiMap[`${contractAddress.toLowerCase()}-${method}`] = metaApi;
         });
       }
     } catch (error) {
