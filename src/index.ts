@@ -294,11 +294,6 @@ export class Biconomy extends EventEmitter {
       };
       const response = await get(options);
       const { data } = JSON.parse(response);
-
-      if (response.code !== 200) {
-        throw new Error(data.log);
-      }
-
       const { dapp, smartContracts, metaApis } = data;
       this.networkId = dapp.networkId;
       this.dappId = dapp._id;
@@ -319,8 +314,8 @@ export class Biconomy extends EventEmitter {
       }
       if (metaApis && metaApis.length > 0) {
         metaApis.forEach((metaApi: MetaApiType) => {
-          const { contractAddress } = metaApi;
-          this.dappApiMap[contractAddress][metaApi.method] = metaApi;
+          const { contractAddress, method } = metaApi;
+          this.dappApiMap[`${contractAddress}-${method}`] = metaApi;
         });
       }
     } catch (error) {

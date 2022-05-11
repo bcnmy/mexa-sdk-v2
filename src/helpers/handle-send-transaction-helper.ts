@@ -70,7 +70,7 @@ export async function handleSendTransaction(
           throw new Error('Can\'t decode method information from payload. Make sure you have uploaded correct ABI on Biconomy Dashboard');
         }
         const methodName = methodInfo.name;
-        const api = this.dappApiMap[to][methodName];
+        const api = this.dappApiMap[`${to}-${methodName}`];
         // Information we get here is contractAddress, methodName, methodType, ApiId
         let customBatchId;
         let customDomainName;

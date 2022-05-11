@@ -135,19 +135,10 @@ export async function sendSignedTransaction(
           }
         }
         const methodName = methodInfo.name;
-        let api = this.dappApiMap[to]
-          ? this.dappApiMap[to][methodName]
-          : undefined;
-        let metaTxApproach;
-        if (!api) {
-          api = this.dappApiMap[config.SCW]
-            ? this.dappApiMap[config.SCW][methodName]
-            : undefined;
-          metaTxApproach = this.smartContractMetaTransactionMap[config.SCW];
-        } else {
-          const contractAddress = api.contractAddress.toLowerCase();
-          metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
-        }
+        const api = this.dappApiMap[`${to}-${methodName}`];
+        const contractAddress = api.contractAddress.toLowerCase();
+        const metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
+
         if (!api) {
           logMessage(`API not found for method ${methodName}`);
           logMessage(`Strict mode ${this.strictMode}`);

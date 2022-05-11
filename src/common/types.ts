@@ -21,9 +21,7 @@ export type MetaApiType = {
 };
 
 export type DappApiMapType = {
-  [key: string]: {
-    [key: string]: MetaApiType
-  }
+  [key: string]: MetaApiType
 };
 
 export type InterfaceMapType = {
