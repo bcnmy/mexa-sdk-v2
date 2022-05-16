@@ -35,6 +35,18 @@ export const validateOptions = (options: OptionsType) => {
       'apiKey is required in options object when creating Biconomy object',
     );
   }
+
+  if (!options.contractAddress) {
+    throw new Error(
+      'contractAddress is required in options object when creating Biconomy object',
+    );
+  }
+
+  if (!options.contractAbi) {
+    throw new Error(
+      'contractAbi is required in options object when creating Biconomy object',
+    );
+  }
 };
 
 export const decodeMethod = (to: string, data: any, interfaceMap: any) => {

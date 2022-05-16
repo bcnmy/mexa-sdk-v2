@@ -112,17 +112,14 @@ export class Biconomy extends EventEmitter {
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
 
+    // DISCUSS should it be an array of contract addresses or a single address
+    this.contractAddress = options.contractAddress;
+    this.contractAbi = options.contractAbi;
+
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
     }
 
-    if (options.contractAddress) {
-      this.contractAddress = options.contractAddress;
-    }
-
-    if (options.contractAbi) {
-      this.contractAbi = options.contractAbi;
-    }
     this.ethersProvider = new ethers.providers.Web3Provider(provider);
   }
 
@@ -301,7 +298,7 @@ export class Biconomy extends EventEmitter {
     try {
       const { getDappDataUrl } = config;
       const options = {
-        uri: getDappDataUrl,
+        uri: `${getDappDataUrl}/${this.contractAddress}`,
         headers: {
           'x-api-key': this.apiKey,
           'Content-Type': 'application/json;charset=utf-8',
