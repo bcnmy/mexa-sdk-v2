@@ -8,6 +8,7 @@ import { ethers } from 'ethers';
 import { get } from 'request-promise';
 import {
   DappApiMapType,
+  DomainDataType,
   ForwarderDomainData,
   ForwarderDomainType,
   ForwardRequestType,
@@ -24,12 +25,14 @@ import {
 import {
   logMessage, validateOptions,
 } from './utils';
-import { config } from './config';
+import { config, domainType, metaTransactionType } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
 // import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
-import { getSignatureEIP712, getSignaturePersonal } from './helpers/signature-helpers';
+import {
+  getPersonalCustomMessageToSign, getSignatureEIP712, getSignatureParameters, getSignaturePersonal,
+} from './helpers/signature-helpers';
 import { sendTransaction } from './helpers/send-transaction-helper';
 
 export class Biconomy extends EventEmitter {
@@ -95,6 +98,10 @@ export class Biconomy extends EventEmitter {
 
   getSignaturePersonal = getSignaturePersonal;
 
+  contractAddress?: string;
+
+  contractAbi?: JSON;
+
   // public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
 
   constructor(provider: ExternalProvider, options: OptionsType) {
@@ -107,6 +114,14 @@ export class Biconomy extends EventEmitter {
 
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
+    }
+
+    if (options.contractAddress) {
+      this.contractAddress = options.contractAddress;
+    }
+
+    if (options.contractAbi) {
+      this.contractAbi = options.contractAbi;
     }
     this.ethersProvider = new ethers.providers.Web3Provider(provider);
   }
@@ -260,7 +275,7 @@ export class Biconomy extends EventEmitter {
   /**
    * Function to initialize the biconomy object with DApp information.
    * It fetches the dapp's smart contract from biconomy database
-   *  and initialize the decoders for each smart
+   * and initialize the decoders for each smart
    * contract which will be used to decode information during function calls.
    * */
   async init() {
@@ -324,23 +339,69 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  private setSmartContractMetaTransactionMap(newSmartContractMetatransactionMap: any) {
-    this.smartContractMetaTransactionMap = newSmartContractMetatransactionMap;
+  async buildSignatureCustomEIP712MetaTransaction(
+    userAddress: string,
+    nonce: number,
+    functionSignature: string,
+    domainData: DomainDataType,
+  ) {
+    const message = {
+      userAddress,
+      nonce,
+      functionSignature,
+    };
+    const dataToSign = JSON.stringify({
+      types: {
+        EIP712Domain: domainType,
+        MetaTransaction: metaTransactionType,
+      },
+      domain: domainData,
+      primaryType: 'MetaTransaction',
+      message,
+    });
+
+    // Review provider
+    const signature = await this.ethersProvider.send('eth_signTypedData_v4', [
+      userAddress,
+      dataToSign,
+    ]);
+    return getSignatureParameters(signature);
   }
 
-  private setSmartContractTrustedForwarderMap(newSmartContractTrustedForwarderMap: any) {
-    this.smartContractTrustedForwarderMap = newSmartContractTrustedForwarderMap;
+  async buildSignatureCustomPersonalSignMetaTransaction(
+    userAddress: string,
+    nonce: number,
+    functionSignature: string,
+  ) {
+    if (!this.networkId) {
+      throw new Error('NetworkId is undefined');
+    }
+
+    if (!this.contractAddress) {
+      throw new Error('Contract Address is undefined');
+    }
+    const messageToSign = getPersonalCustomMessageToSign(
+      {
+        nonce,
+        functionSignature,
+        chainId: this.networkId,
+        contractAddress: this.contractAddress,
+      },
+    );
+
+    const signature = await this.signer.signMessage(
+      `0x${messageToSign.toString('hex')}`,
+      userAddress,
+    );
+
+    return getSignatureParameters(signature);
   }
 
-  private setInterfaceMap(newInterfaceMap: any) {
-    this.interfaceMap = newInterfaceMap;
-  }
+  // async buildSignatureTrustedForwarderEIP712MetaTransaction() {
 
-  private setSmartContractMap(newSmartContractMap: any) {
-    this.smartContractMap = newSmartContractMap;
-  }
+  // }
 
-  private setDappApiMap(newDappApiMap: any) {
-    this.dappApiMap = newDappApiMap;
-  }
+  // async buildSignatureTrsutedForwarderPersonalSignMetaTransaction() {
+
+  // }
 }

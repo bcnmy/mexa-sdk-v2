@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import abi from 'ethereumjs-abi';
+import { toBuffer, ToBufferInputTypes } from 'ethereumjs-util';
 import type { Biconomy } from '..';
 import { ForwarderDomainData, ForwarderDomainType, ForwardRequestType } from '../common/types';
 import { RESPONSE_CODES } from '../config';
@@ -113,7 +114,18 @@ export async function getSignatureEIP712(
   }
 }
 
-export function getPersonalForwardMessageToSign(request: any) {
+export function getPersonalForwardMessageToSign(request:
+{
+  from: string;
+  to: string;
+  token: string;
+  txGas: number;
+  tokenGasPrice: number;
+  batchId: number;
+  batchNonce: number;
+  deadline: number;
+  data: ethers.utils.BytesLike;
+}) {
   return abi.soliditySHA3(
     [
       'address',
@@ -137,6 +149,19 @@ export function getPersonalForwardMessageToSign(request: any) {
       request.deadline,
       ethers.utils.keccak256(request.data),
     ],
+  );
+}
+
+export function getPersonalCustomMessageToSign(request:
+{
+  nonce: number;
+  contractAddress: string;
+  chainId: number;
+  functionSignature: ToBufferInputTypes;
+}) {
+  return abi.soliditySHA3(
+    ['uint256', 'address', 'uint256', 'bytes'],
+    [request.nonce, request.contractAddress, request.chainId, toBuffer(request.functionSignature)],
   );
 }
 

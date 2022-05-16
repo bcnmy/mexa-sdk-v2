@@ -4,20 +4,9 @@ import { ethers } from 'ethers';
 export type OptionsType = {
   apiKey: string,
   strictMode: boolean,
-  jsonRpcUrl?: string
-};
-
-export type MetaApiType = {
-  apiId: string,
-  name: string,
-  dappId: Types.ObjectId,
-  contractId: Types.ObjectId,
-  method: string,
-  methodType: string,
-  apiType: string,
-  createdOn: number,
-  createdBy: Types.ObjectId,
-  contractAddress: string
+  jsonRpcUrl?: string,
+  contractAddress?: string,
+  contractAbi?: JSON
 };
 
 export type DappApiMapType = {
@@ -101,4 +90,24 @@ export type SmartContractType = {
   address: string,
   createdOn: number,
   createdBy: Types.ObjectId,
+};
+
+export type MetaApiType = {
+  apiId: string,
+  name: string,
+  dappId: Types.ObjectId,
+  contractId: Types.ObjectId,
+  method: string,
+  methodType: string,
+  apiType: string,
+  createdOn: number,
+  createdBy: Types.ObjectId,
+  contractAddress: string
+};
+
+export type DomainDataType = {
+  name: string,
+  version: string,
+  verifyingContract: string,
+  salt: string
 };
