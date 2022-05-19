@@ -90,7 +90,7 @@ export async function getSignatureEIP712(
   if (type === 'v3' || type === 'V3') {
     signTypedDataType = 'eth_signTypedData_v3';
   }
-  const dataToSign = getEIP712ForwardMessageToSign(
+  const dataToSign = await getEIP712ForwardMessageToSign(
     this.forwarderDomainDetails,
     this.forwarderDomainType,
     this.forwardRequestType,
@@ -109,6 +109,8 @@ export async function getSignatureEIP712(
     const newSignature = r + s.slice(2) + vNum.slice(2);
     return newSignature;
   } catch (error) {
+    console.log('error inside signature');
+    console.log(error);
     return '';
   }
 }

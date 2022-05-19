@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
 import { HandleSendTransactionParamsType } from '../common/types';
-import { RESPONSE_CODES } from '../config';
 import { decodeMethod, logMessage } from '../utils';
 import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 import type { Biconomy } from '..';
@@ -196,7 +195,7 @@ export async function handleSendTransaction(
           paramArray.push(request);
 
           this.forwarderDomainData.verifyingContract = forwarderToAttach;
-          const domainDataToUse = this.forwarderDomainDetails[parseInt(forwarderToAttach, 10)];
+          const domainDataToUse = this.forwarderDomainData;
 
           if (customDomainName) {
             domainDataToUse.name = customDomainName.toString();
@@ -258,15 +257,8 @@ export async function handleSendTransaction(
               ? this.eip712Sign : this.personalSign,
           };
 
-          return {
-            code: RESPONSE_CODES.SUCCESS_RESPONSE,
-            message: 'Success',
-            data: {
-              account,
-              api,
-              data,
-            },
-          };
+          const hash = await this.sendTransaction(account, data);
+          return hash;
         }
         paramArray.push(...methodInfo.args);
 
