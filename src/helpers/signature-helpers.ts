@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import abi from 'ethereumjs-abi';
+import { toBuffer, ToBufferInputTypes } from 'ethereumjs-util';
 import type { Biconomy } from '..';
 import { ForwarderDomainData, ForwarderDomainType, ForwardRequestType } from '../common/types';
 import { RESPONSE_CODES } from '../config';
@@ -115,7 +116,18 @@ export async function getSignatureEIP712(
   }
 }
 
-export function getPersonalForwardMessageToSign(request: any) {
+export function getPersonalForwardMessageToSign(request:
+{
+  from: string;
+  to: string;
+  token: string;
+  txGas: number;
+  tokenGasPrice: number;
+  batchId: number;
+  batchNonce: number;
+  deadline: number;
+  data: ethers.utils.BytesLike;
+}) {
   return abi.soliditySHA3(
     [
       'address',
@@ -142,6 +154,19 @@ export function getPersonalForwardMessageToSign(request: any) {
   );
 }
 
+export function getPersonalCustomMessageToSign(request:
+{
+  nonce: number;
+  contractAddress: string;
+  chainId: number;
+  functionSignature: ToBufferInputTypes;
+}) {
+  return abi.soliditySHA3(
+    ['uint256', 'address', 'uint256', 'bytes'],
+    [request.nonce, request.contractAddress, request.chainId, toBuffer(request.functionSignature)],
+  );
+}
+
 /**
  * Method to get the signature parameters.
  * @param engine Object containing the signer, walletprovider and originalprovider
@@ -151,11 +176,13 @@ export async function getSignaturePersonal(this: Biconomy, request: any) {
   const hashToSign = getPersonalForwardMessageToSign(request);
   let signature;
 
-  const { signer } = this;
   // eslint-disable-next-line no-async-promise-executor
   const promise = new Promise(async (resolve, reject) => {
     try {
-      signature = await signer.signMessage(ethers.utils.arrayify(hashToSign));
+      if (!this.signer) {
+        throw new Error('Signer not found');
+      }
+      signature = await this.signer.signMessage(ethers.utils.arrayify(hashToSign));
       const { r, s, v } = getSignatureParameters(signature);
       const vNum = ethers.BigNumber.from(v).toHexString();
       const newSignature = r + s.slice(2) + vNum.slice(2);

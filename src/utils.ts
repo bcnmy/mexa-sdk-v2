@@ -35,6 +35,12 @@ export const validateOptions = (options: OptionsType) => {
       'apiKey is required in options object when creating Biconomy object',
     );
   }
+
+  if (!options.contractAddresses) {
+    throw new Error(
+      'contractAddresses is required in options object when creating Biconomy object',
+    );
+  }
 };
 
 export const decodeMethod = (to: string, data: any, interfaceMap: any) => {
@@ -42,6 +48,6 @@ export const decodeMethod = (to: string, data: any, interfaceMap: any) => {
     return interfaceMap[to].parseTransaction({ data });
   }
   throw new Error(
-    'to, data or interfaceMap is undefined',
+    'to, data or interfaceMap are undefined',
   );
 };

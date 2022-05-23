@@ -3,7 +3,6 @@
 export const config = {
   SCW: 'SCW',
   metaEntryPointBaseUrl: 'http://localhost:3000',
-  metaTxUrl: '',
   getDappDataUrl: 'http://localhost:4001/api/v1/sdk/dapp',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
@@ -91,3 +90,16 @@ export const STATUS = {
   BICONOMY_READY: 'biconomy_ready',
   NO_DATA: 'no_data',
 };
+
+export const domainType = [
+  { name: 'name', type: 'string' },
+  { name: 'version', type: 'string' },
+  { name: 'verifyingContract', type: 'address' },
+  { name: 'salt', type: 'bytes32' },
+];
+
+export const metaTransactionType = [
+  { name: 'nonce', type: 'uint256' },
+  { name: 'from', type: 'address' },
+  { name: 'functionSignature', type: 'bytes' },
+];
