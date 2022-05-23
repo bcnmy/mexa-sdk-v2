@@ -5,7 +5,7 @@
 import EventEmitter from 'events';
 import { ExternalProvider } from '@ethersproject/providers';
 import { ethers } from 'ethers';
-import { get } from 'request-promise';
+import axios from 'axios';
 import {
   DappApiMapType,
   DomainDataType,
@@ -17,6 +17,7 @@ import {
   JsonRpcRequest,
   MetaApiType,
   OptionsType,
+  SignatureParametersPerContractAddressType,
   SmartContractMapType,
   SmartContractMetaTransactionMapType,
   SmartContractTrustedForwarderMapType,
@@ -98,11 +99,7 @@ export class Biconomy extends EventEmitter {
 
   getSignaturePersonal = getSignaturePersonal;
 
-  contractAddress?: string;
-
-  contractAbi?: JSON;
-
-  // public getForwardRequestAndMessageToSign = getForwardRequestAndMessageToSign;
+  contractAddresses?: string[];
 
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
@@ -112,9 +109,7 @@ export class Biconomy extends EventEmitter {
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
 
-    // DISCUSS should it be an array of contract addresses or a single address
-    this.contractAddress = options.contractAddress;
-    this.contractAbi = options.contractAbi;
+    this.contractAddresses = options.contractAddresses;
 
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
@@ -297,16 +292,21 @@ export class Biconomy extends EventEmitter {
   async getDappData() {
     try {
       const { getDappDataUrl } = config;
-      const options = {
-        uri: `${getDappDataUrl}/${this.contractAddress}`,
-        headers: {
-          'x-api-key': this.apiKey,
-          'Content-Type': 'application/json;charset=utf-8',
+      const response = await axios.get(
+        `${getDappDataUrl}`,
+        {
+          params: {
+            contractAddresses: this.contractAddresses,
+          },
+          headers: {
+            'x-api-key': this.apiKey,
+            'Content-Type': 'application/json;charset=utf-8',
+          },
         },
-      };
-      const response = await get(options);
-      const { data } = JSON.parse(response);
+      );
+      const { data } = response.data;
       const { dapp, smartContracts, metaApis } = data;
+      console.log('data', data);
       this.networkId = dapp.networkId;
       this.dappId = dapp._id;
 
@@ -370,28 +370,31 @@ export class Biconomy extends EventEmitter {
     nonce: number,
     functionSignature: string,
   ) {
-    if (!this.networkId) {
-      throw new Error('NetworkId is undefined');
+    if (!this.contractAddresses) {
+      throw new Error('Contract Addresses array is undefined');
     }
 
-    if (!this.contractAddress) {
-      throw new Error('Contract Address is undefined');
-    }
-    const messageToSign = getPersonalCustomMessageToSign(
-      {
-        nonce,
-        functionSignature,
-        chainId: this.networkId,
-        contractAddress: this.contractAddress,
-      },
-    );
+    const signatureParamtersPerContractAddress: SignatureParametersPerContractAddressType = {};
 
-    const signature = await this.signer.signMessage(
-      `0x${messageToSign.toString('hex')}`,
-      userAddress,
-    );
+    this.contractAddresses.forEach(async (contractAddress: string) => {
+      if (!this.networkId) {
+        throw new Error('NetworkId is undefined');
+      }
+      const messageToSign = getPersonalCustomMessageToSign(
+        {
+          nonce,
+          functionSignature,
+          chainId: this.networkId,
+          contractAddress,
+        },
+      );
 
-    return getSignatureParameters(signature);
+      const signature = await this.signer.signMessage(
+        `0x${messageToSign.toString('hex')}`,
+        userAddress,
+      );
+      signatureParamtersPerContractAddress[contractAddress] = getSignatureParameters(signature);
+    });
   }
 
   // async buildSignatureTrustedForwarderEIP712MetaTransaction() {

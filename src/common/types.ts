@@ -3,10 +3,17 @@ import { ethers } from 'ethers';
 
 export type OptionsType = {
   apiKey: string,
-  strictMode: boolean,
+  strictMode?: boolean,
   jsonRpcUrl?: string,
-  contractAddress?: string,
-  contractAbi?: JSON
+  contractAddresses: string[],
+};
+
+export type SignatureParametersPerContractAddressType = {
+  [key: string]: {
+    r: string,
+    s: string,
+    v : number
+  }
 };
 
 export type DappApiMapType = {
@@ -34,6 +41,11 @@ export type ForwarderDomainData = {
   version: string,
   verifyingContract: string,
   salt: string
+};
+
+export type SystemInfoResponse = {
+  code: string,
+  data: any
 };
 
 export enum ContractMetaTransactionType {

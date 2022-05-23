@@ -36,15 +36,9 @@ export const validateOptions = (options: OptionsType) => {
     );
   }
 
-  if (!options.contractAddress) {
+  if (!options.contractAddresses) {
     throw new Error(
-      'contractAddress is required in options object when creating Biconomy object',
-    );
-  }
-
-  if (!options.contractAbi) {
-    throw new Error(
-      'contractAbi is required in options object when creating Biconomy object',
+      'contractAddresses is required in options object when creating Biconomy object',
     );
   }
 };
