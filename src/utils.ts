@@ -48,6 +48,6 @@ export const decodeMethod = (to: string, data: any, interfaceMap: any) => {
     return interfaceMap[to].parseTransaction({ data });
   }
   throw new Error(
-    'to, data or interfaceMap is undefined',
+    'to, data or interfaceMap are undefined',
   );
 };

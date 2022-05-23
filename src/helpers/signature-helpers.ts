@@ -176,11 +176,13 @@ export async function getSignaturePersonal(this: Biconomy, request: any) {
   const hashToSign = getPersonalForwardMessageToSign(request);
   let signature;
 
-  const { signer } = this;
   // eslint-disable-next-line no-async-promise-executor
   const promise = new Promise(async (resolve, reject) => {
     try {
-      signature = await signer.signMessage(ethers.utils.arrayify(hashToSign));
+      if (!this.signer) {
+        throw new Error('Signer not found');
+      }
+      signature = await this.signer.signMessage(ethers.utils.arrayify(hashToSign));
       const { r, s, v } = getSignatureParameters(signature);
       const vNum = ethers.BigNumber.from(v).toHexString();
       const newSignature = r + s.slice(2) + vNum.slice(2);

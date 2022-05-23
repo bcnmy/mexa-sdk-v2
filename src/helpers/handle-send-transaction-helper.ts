@@ -70,7 +70,6 @@ export async function handleSendTransaction(
         }
         const methodName = methodInfo.name;
         const api = this.dappApiMap[`${to}-${methodName}`];
-        logMessage('api found');
         // Information we get here is contractAddress, methodName, methodType, ApiId
         let customBatchId;
         let customDomainName;
@@ -131,15 +130,13 @@ export async function handleSendTransaction(
         logMessage('User account fetched');
 
         logMessage(methodInfo.args);
+
         const paramArray:Array<any> = [];
 
-        let forwardedData;
-        let gasLimitNum;
-
         if (metaTxApproach === this.trustedForwarderMetaTransaction) {
+          let gasLimitNum;
           logMessage('Smart contract is configured to use Trusted Forwarder as meta transaction type');
-          forwardedData = params[0].data;
-
+          const forwardedData = params[0].data;
           const signatureFromPayload = params[0].signature;
           // Check if txGas is present, if not calculate gas limit for txGas
 
@@ -174,13 +171,13 @@ export async function handleSendTransaction(
 
           // TODO
           // get the new smartContractTrustedForwarderMap and set it on the instance
-          const forwarderToAttach = await findTheRightForwarder({
+          const forwarderToAttach = ethers.utils.getAddress(await findTheRightForwarder({
             to,
             smartContractTrustedForwarderMap: this.smartContractTrustedForwarderMap,
             provider: this.readOnlyProvider ? this.readOnlyProvider : this.ethersProvider,
             forwarderAddresses: this.forwarderAddresses,
             forwarderAddress: this.forwarderAddress,
-          });
+          }));
 
           const { request } = await buildForwardTxRequest(
             account,
@@ -257,8 +254,7 @@ export async function handleSendTransaction(
               ? this.eip712Sign : this.personalSign,
           };
 
-          const hash = await this.sendTransaction(account, data);
-          return hash;
+          return await this.sendTransaction(account, data);
         }
         paramArray.push(...methodInfo.args);
 
@@ -270,32 +266,19 @@ export async function handleSendTransaction(
           to,
         };
 
-        const hash = await this.sendTransaction(account, data);
-        return hash;
-
-        /* return {
-          code: RESPONSE_CODES.SUCCESS_RESPONSE,
-          message: 'Success',
-          data: {
-            account,
-            api,
-            data,
-          },
-        }; */
+        return await this.sendTransaction(account, data);
       }
-      /* if (this.strictMode) {
-        throw new Error('Decoders not initialized properly
-        in mexa sdk. Make sure your have smart contracts registered on Mexa Dashboard');
+      if (this.strictMode) {
+        throw new Error(`Make sure your have smart contract with address ${to} is registered on the dashboard`);
       }
       logMessage(
-        'Smart contract not found on dashbaord.
-        Strict mode is off, so falling back to normal transaction mode',
+        `Smart contract with address ${to} not found on dashbaord. Strict mode is off, so falling back to normal transaction mode`,
       );
-      return await fallback(); */
+      return await fallback();
     }
-    /* throw new Error(`Invalid payload data ${JSON.stringify(
+    throw new Error(`Invalid payload data ${JSON.stringify(
       params,
-    )}. Expecting params key to be an array with first element having a 'to' property`); */
+    )}. Expecting params key to be an array with first element having a 'to' property`);
   } catch (error) {
     return error;
   }

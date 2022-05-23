@@ -8,7 +8,6 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import {
   DappApiMapType,
-  DomainDataType,
   ForwarderDomainData,
   ForwarderDomainType,
   ForwardRequestType,
@@ -17,7 +16,6 @@ import {
   JsonRpcRequest,
   MetaApiType,
   OptionsType,
-  SignatureParametersPerContractAddressType,
   SmartContractMapType,
   SmartContractMetaTransactionMapType,
   SmartContractTrustedForwarderMapType,
@@ -26,15 +24,16 @@ import {
 import {
   logMessage, validateOptions,
 } from './utils';
-import { config, domainType, metaTransactionType } from './config';
+import { config } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
 // import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 import {
-  getPersonalCustomMessageToSign, getSignatureEIP712, getSignatureParameters, getSignaturePersonal,
+  getSignatureEIP712, getSignaturePersonal,
 } from './helpers/signature-helpers';
 import { sendTransaction } from './helpers/send-transaction-helper';
+import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonalSignMetaTransaction } from './helpers/meta-transaction-custom-helpers';
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -57,7 +56,7 @@ export class Biconomy extends EventEmitter {
 
   strictMode = false;
 
-  signer: any;
+  signer?: ethers.providers.JsonRpcSigner;
 
   forwarderDomainType?: ForwarderDomainType;
 
@@ -101,6 +100,10 @@ export class Biconomy extends EventEmitter {
 
   contractAddresses?: string[];
 
+  buildSignatureCustomEIP712MetaTransaction = buildSignatureCustomEIP712MetaTransaction;
+
+  buildSignatureCustomPersonalSignMetaTransaction = buildSignatureCustomPersonalSignMetaTransaction;
+
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
     validateOptions(options);
@@ -108,14 +111,12 @@ export class Biconomy extends EventEmitter {
     this.strictMode = options.strictMode || false;
     this.externalProvider = provider;
     this.provider = this.proxyFactory();
-
     this.contractAddresses = options.contractAddresses;
+    this.ethersProvider = new ethers.providers.Web3Provider(provider);
 
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
     }
-
-    this.ethersProvider = new ethers.providers.Web3Provider(provider);
   }
 
   private proxyFactory() {
@@ -157,9 +158,6 @@ export class Biconomy extends EventEmitter {
   }
 
   handleRpcSendType2(method: string, params?: Array<unknown>) {
-    // need to use ts-ignore because ethers externalProvider
-    // type does not have full coverage of send method
-
     // @ts-ignore
     const fallback = () => this.externalProvider.send?.(method, params);
     try {
@@ -177,9 +175,6 @@ export class Biconomy extends EventEmitter {
   }
 
   handleRpcSendType3(payload: JsonRpcRequest) {
-    // need to use ts-ignore because ethers externalProvider
-    // type does not have full coverage of send method
-
     // @ts-ignore
     const fallback = () => this.externalProvider.send?.(payload);
     const { method, params } = payload;
@@ -306,7 +301,7 @@ export class Biconomy extends EventEmitter {
       );
       const { data } = response.data;
       const { dapp, smartContracts, metaApis } = data;
-      console.log('data', data);
+
       this.networkId = dapp.networkId;
       this.dappId = dapp._id;
 
@@ -335,73 +330,4 @@ export class Biconomy extends EventEmitter {
       throw error;
     }
   }
-
-  async buildSignatureCustomEIP712MetaTransaction(
-    userAddress: string,
-    nonce: number,
-    functionSignature: string,
-    domainData: DomainDataType,
-  ) {
-    const message = {
-      userAddress,
-      nonce,
-      functionSignature,
-    };
-    const dataToSign = JSON.stringify({
-      types: {
-        EIP712Domain: domainType,
-        MetaTransaction: metaTransactionType,
-      },
-      domain: domainData,
-      primaryType: 'MetaTransaction',
-      message,
-    });
-
-    // Review provider
-    const signature = await this.ethersProvider.send('eth_signTypedData_v4', [
-      userAddress,
-      dataToSign,
-    ]);
-    return getSignatureParameters(signature);
-  }
-
-  async buildSignatureCustomPersonalSignMetaTransaction(
-    userAddress: string,
-    nonce: number,
-    functionSignature: string,
-  ) {
-    if (!this.contractAddresses) {
-      throw new Error('Contract Addresses array is undefined');
-    }
-
-    const signatureParamtersPerContractAddress: SignatureParametersPerContractAddressType = {};
-
-    this.contractAddresses.forEach(async (contractAddress: string) => {
-      if (!this.networkId) {
-        throw new Error('NetworkId is undefined');
-      }
-      const messageToSign = getPersonalCustomMessageToSign(
-        {
-          nonce,
-          functionSignature,
-          chainId: this.networkId,
-          contractAddress,
-        },
-      );
-
-      const signature = await this.signer.signMessage(
-        `0x${messageToSign.toString('hex')}`,
-        userAddress,
-      );
-      signatureParamtersPerContractAddress[contractAddress] = getSignatureParameters(signature);
-    });
-  }
-
-  // async buildSignatureTrustedForwarderEIP712MetaTransaction() {
-
-  // }
-
-  // async buildSignatureTrsutedForwarderPersonalSignMetaTransaction() {
-
-  // }
 }
