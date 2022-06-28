@@ -2,6 +2,7 @@ import { post } from 'request-promise';
 import type { Biconomy } from '..';
 import { BICONOMY_RESPONSE_CODES, config, RESPONSE_CODES } from '../config';
 import { logMessage } from '../utils';
+import { mexaSdkClientMessenger } from './client-messaging-helper';
 
 /**
  * Method to send the transaction to biconomy server and call the callback method
@@ -32,13 +33,11 @@ export async function sendTransaction(this: Biconomy, account: string, data: any
   logMessage(response);
   const result = JSON.parse(response);
 
-  if (result.txHash && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {
-    return result.txHash;
+  if (result.transactionId && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {
+    await mexaSdkClientMessenger({
+      transactionId: result.transactionId,
+    });
   }
-
-  // Any error from relayer infra
-  // TODO
-  // Involve fallback here with callDefaultProvider
   const error:any = {};
   error.code = result.flag || result.code;
   if (result.flag === BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
