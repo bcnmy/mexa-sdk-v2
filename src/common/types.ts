@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 
 export type OptionsType = {
   apiKey: string,
+  debug?: boolean,
   strictMode?: boolean,
   jsonRpcUrl?: string,
   contractAddresses: string[],
