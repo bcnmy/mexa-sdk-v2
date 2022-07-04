@@ -60,7 +60,7 @@ export async function getEIP712ForwardMessageToSign(
 // take parameter for chosen signature type V3 or V4
 export async function getSignatureEIP712(
   this: Biconomy,
-  account: any,
+  account: string,
   request: any,
   domainData: any,
   type: string,
