@@ -35,6 +35,8 @@ import {
 import { sendTransaction } from './helpers/send-transaction-helper';
 import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonalSignMetaTransaction } from './helpers/meta-transaction-custom-helpers';
 
+// TODO
+// add debug and logs enabled logic
 export class Biconomy extends EventEmitter {
   apiKey: string;
 
