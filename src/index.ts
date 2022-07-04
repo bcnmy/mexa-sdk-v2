@@ -286,9 +286,8 @@ export class Biconomy extends EventEmitter {
 
   async getDappData() {
     try {
-      const { getDappDataUrl } = config;
       const response = await axios.get(
-        `${getDappDataUrl}`,
+        `${config.metaEntryPointBaseUrl}/api/v1/sdk/dapp/`,
         {
           params: {
             contractAddresses: this.contractAddresses,

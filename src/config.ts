@@ -2,8 +2,7 @@
 // Review and update URLs
 export const config = {
   SCW: 'SCW',
-  metaEntryPointBaseUrl: 'http://localhost:3000',
-  getDappDataUrl: 'http://localhost:4001/api/v1/sdk/dapp',
+  metaEntryPointBaseUrl: 'https://gasless-meta.staging.biconomy.io',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
   eip712DomainName: 'Biconomy Meta Transaction',
