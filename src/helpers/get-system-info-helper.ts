@@ -44,6 +44,10 @@ export async function getSystemInfo(
     this.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
     this.eip712Sign = systemInfo.eip712Sign;
     this.personalSign = systemInfo.personalSign;
+    this.walletFactoryAddress = systemInfo.walletFactoryAddress;
+    this.baseWalletAddress = systemInfo.baseWalletAddress;
+    this.entryPointAddress = systemInfo.entryPointAddress;
+    this.handlerAddress = systemInfo.handlerAddress;
 
     if (this.forwarderAddress && this.forwarderAddress !== '') {
       this.biconomyForwarder = new ethers.Contract(

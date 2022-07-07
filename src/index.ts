@@ -34,6 +34,7 @@ import {
 } from './helpers/signature-helpers';
 import { sendTransaction } from './helpers/send-transaction-helper';
 import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonalSignMetaTransaction } from './helpers/meta-transaction-custom-helpers';
+import { BiconomyWalletClient } from './BiconomyWalletClient';
 
 // TODO
 // add debug and logs enabled logic
@@ -82,6 +83,14 @@ export class Biconomy extends EventEmitter {
 
   forwarderAddress?: string;
 
+  walletFactoryAddress?: string;
+
+  baseWalletAddress?: string;
+
+  entryPointAddress?: string;
+
+  handlerAddress?: string;
+
   ethersProvider: ethers.providers.Web3Provider;
 
   networkId?: number;
@@ -105,6 +114,8 @@ export class Biconomy extends EventEmitter {
   buildSignatureCustomEIP712MetaTransaction = buildSignatureCustomEIP712MetaTransaction;
 
   buildSignatureCustomPersonalSignMetaTransaction = buildSignatureCustomPersonalSignMetaTransaction;
+
+  biconomyWalletClient?: BiconomyWalletClient;
 
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
@@ -280,6 +291,23 @@ export class Biconomy extends EventEmitter {
           throw new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
         }
         await this.getSystemInfo(providerNetworkId);
+
+        if (
+          this.walletFactoryAddress
+           && this.baseWalletAddress
+            && this.entryPointAddress
+             && this.handlerAddress
+        ) {
+          this.biconomyWalletClient = new BiconomyWalletClient({
+            provider: this.provider,
+            ethersProvider: this.ethersProvider,
+            walletFactoryAddress: this.walletFactoryAddress,
+            baseWalletAddress: this.baseWalletAddress,
+            entryPointAddress: this.entryPointAddress,
+            handlerAddress: this.handlerAddress,
+            networkId: this.networkId,
+          });
+        }
       } else {
         throw new Error('Could not get network version');
       }
