@@ -15,6 +15,7 @@ import {
 import {
   config,
 } from './config';
+import { logMessage } from './utils';
 
 const getSignatureParameters = (signature: string) => {
   if (!ethers.utils.isHexString(signature)) {
@@ -240,7 +241,7 @@ export class BiconomyWalletClient {
       tx = await dispatchProvider.send('eth_sendTransaction', [txParams]);
     } catch (err) {
       // handle conditional rejections in this stack trace
-      console.log(err);
+      logMessage.error(JSON.stringify(err));
       throw err;
     }
     return tx;
