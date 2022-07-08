@@ -320,6 +320,7 @@ export class Biconomy extends EventEmitter {
           this.gnosiWalletClient = new GnosisWalletClient({
             ethersProvider: this.ethersProvider,
             networkId: this.networkId,
+            apiKey: this.apiKey,
             gnosisSafeProxyFactoryAddress: this.gnosisSafeProxyFactoryAddress,
             gnosisSafeAddress: this.gnosisSafeAddress,
           });

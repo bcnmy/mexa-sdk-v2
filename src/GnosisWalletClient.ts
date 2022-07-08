@@ -25,6 +25,8 @@ const getSignatureParameters = (signature: string) => {
 export class GnosisWalletClient {
   ethersProvider;
 
+  apiKey;
+
   networkId;
 
   gnosisSafeProxyFactoryAddress;
@@ -41,10 +43,12 @@ export class GnosisWalletClient {
       gnosisSafeProxyFactoryAddress,
       gnosisSafeAddress,
       networkId,
+      apiKey,
     } = gnosisClientParameters;
 
     this.ethersProvider = ethersProvider;
     this.networkId = networkId;
+    this.apiKey = apiKey;
     this.gnosisSafeProxyFactoryAddress = gnosisSafeProxyFactoryAddress;
     this.gnosisSafeAddress = gnosisSafeAddress;
 
@@ -79,9 +83,9 @@ export class GnosisWalletClient {
     return tx;
   }
 
-  static async whitelistTargetContract(authToken: string, contractAddresses: Array<string>) {
+  async whitelistTargetContract(authToken: string, contractAddresses: Array<string>) {
     await axios.post(
-      `${config.metaEntryPointBaseUrl}/api/v1/dapp/gnosis/whitelist-target`,
+      `${config.metaEntryPointBaseUrl}/api/v1/sdk/dapp/gnosis/whitelist-target`,
       {
         contractAddresses,
       },
@@ -89,6 +93,7 @@ export class GnosisWalletClient {
         headers: {
           'Content-Type': 'application/json;charset=utf-8',
           authToken,
+          apiKey: this.apiKey,
         },
       },
     );

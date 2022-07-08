@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 export type GnosisWalletClientParams = {
   ethersProvider: ethers.providers.Web3Provider,
   networkId: number,
+  apiKey: string,
   gnosisSafeProxyFactoryAddress: string,
   gnosisSafeAddress: string,
 };
