@@ -1,3 +1,6 @@
+import { ExternalProvider } from '@ethersproject/providers';
+import { ethers } from 'ethers';
+
 export type CheckIfWalletExistsAndDeployParamsType = {
   eoa: string,
   index: number
@@ -12,20 +15,31 @@ export type BuildExecTransactionParamsType = {
   batchId: number,
 };
 
+export type ExecTransactionBodyType = {
+  to: string,
+  value: number,
+  data: string,
+  operation: number,
+  targetTxGas: number,
+  baseGas: number,
+  gasPrice: number,
+  gasToken: string,
+  refundReceiver: string,
+  nonce: number,
+};
+
 export type SendBiconomyWalletTransactionsParamsType = {
-  execTransactionBody,
+  execTransactionBody: ExecTransactionBodyType,
+  batchId: number,
   walletAddress: string,
   signatureType: string,
   signature?: string,
+  webHookAttributes: any
 };
 
 export type BiconomyWalletClientParamsType = {
-  biconomyProvider, // notice we passed engine (Biconomy) here
-  provider,
-  // Either we pass above both or target provider and use API calls to relay
-  targetProvider,
-  biconomyAttributes,
-  isSignerWithAccounts,
+  provider: ExternalProvider,
+  ethersProvider: ethers.providers.Web3Provider,
   walletFactoryAddress: string,
   baseWalletAddress: string,
   entryPointAddress: string,

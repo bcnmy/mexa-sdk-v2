@@ -2,8 +2,7 @@
 // Review and update URLs
 export const config = {
   SCW: 'SCW',
-  metaEntryPointBaseUrl: 'http://localhost:3000',
-  getDappDataUrl: 'http://localhost:4001/api/v1/sdk/dapp',
+  metaEntryPointBaseUrl: 'https://gasless-meta.staging.biconomy.io',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
   eip712DomainName: 'Biconomy Meta Transaction',
@@ -15,18 +14,21 @@ export const config = {
   NONCE_BATCH_ID: 0,
   EXPIRY: 0,
   BASE_GAS: 0,
-  EIP712_SAFE_TX_TYPE: {
-    // "SafeTx(
-    //  address to,
-    //  uint256 value,
-    //  bytes data,
-    //  uint8 operation,
-    //  uint256 safeTxGas,
-    //  uint256 baseGas,
-    //  uint256 gasPrice,
-    //  address gasToken,
-    //  address refundReceiver,
-    //  uint256 nonce)"
+  EIP712_WALLET_TX_TYPE: { // Biconomy Wallet
+    WalletTx: [
+      { type: 'address', name: 'to' },
+      { type: 'uint256', name: 'value' },
+      { type: 'bytes', name: 'data' },
+      { type: 'uint8', name: 'operation' },
+      { type: 'uint256', name: 'targetTxGas' },
+      { type: 'uint256', name: 'baseGas' },
+      { type: 'uint256', name: 'gasPrice' },
+      { type: 'address', name: 'gasToken' },
+      { type: 'address', name: 'refundReceiver' },
+      { type: 'uint256', name: 'nonce' },
+    ],
+  },
+  EIP712_SAFE_TX_TYPE: { // Gnosis Wallet
     SafeTx: [
       { type: 'address', name: 'to' },
       { type: 'uint256', name: 'value' },

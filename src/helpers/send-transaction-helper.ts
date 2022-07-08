@@ -26,11 +26,15 @@ export async function sendTransaction(this: Biconomy, account: string, data: any
     body: JSON.stringify(data),
   };
 
-  logMessage('request body');
-  logMessage(JSON.stringify(data));
+  // TODO
+  // Fallback
+  // return await fallback()
+
+  logMessage.info('request body');
+  logMessage.info(JSON.stringify(data));
 
   const response = await post(options);
-  logMessage(response);
+  logMessage.info(response);
   const result = JSON.parse(response);
 
   if (result.transactionId && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {
@@ -38,7 +42,7 @@ export async function sendTransaction(this: Biconomy, account: string, data: any
       transactionId: result.transactionId,
     });
   }
-  const error:any = {};
+  const error: any = {};
   error.code = result.flag || result.code;
   if (result.flag === BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
     error.code = RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;

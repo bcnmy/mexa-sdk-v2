@@ -126,7 +126,7 @@ export async function sendSignedTransaction(
               );
               return error;
             }
-            logMessage(
+            logMessage.info(
               'Strict mode is off so falling back to default provider for handling transaction',
             );
             if (typeof data === 'object' && data.rawTransaction) {
@@ -140,8 +140,8 @@ export async function sendSignedTransaction(
         const metaTxApproach = this.smartContractMetaTransactionMap[contractAddress];
 
         if (!api) {
-          logMessage(`API not found for method ${methodName}`);
-          logMessage(`Strict mode ${this.strictMode}`);
+          logMessage.info(`API not found for method ${methodName}`);
+          logMessage.info(`Strict mode ${this.strictMode}`);
           if (this.strictMode) {
             const error = formatMessage(
               RESPONSE_CODES.API_NOT_FOUND,
@@ -149,7 +149,7 @@ export async function sendSignedTransaction(
             );
             return error;
           }
-          logMessage(
+          logMessage.info(
             'Falling back to default provider as strict mode is false in biconomy',
           );
           if (typeof data === 'object' && data.rawTransaction) {
@@ -157,14 +157,14 @@ export async function sendSignedTransaction(
           }
           await fallback();
         }
-        logMessage('API found');
+        logMessage.info('API found');
         const paramArray = [];
         const parsedTransaction = ethers.utils.parseTransaction(
           rawTransaction,
         );
         const account = parsedTransaction ? parsedTransaction.from : undefined;
 
-        logMessage(`signer is ${account}`);
+        logMessage.info(`signer is ${account}`);
         if (!account) {
           const error = formatMessage(
             RESPONSE_CODES.ERROR_RESPONSE,
@@ -203,14 +203,14 @@ export async function sendSignedTransaction(
               gasLimitNum = ethers.BigNumber.from(gasLimit.toString())
                 .add(ethers.BigNumber.from(5000))
                 .toNumber();
-              logMessage(`gas limit number${gasLimitNum}`);
+              logMessage.info(`gas limit number${gasLimitNum}`);
             }
           } else {
             gasLimitNum = ethers.BigNumber.from(
               gasLimit.toString(),
             ).toNumber();
           }
-          logMessage(request);
+          logMessage.info(request);
 
           paramArray.push(request);
 
@@ -240,7 +240,7 @@ export async function sendSignedTransaction(
             const domainSeparator = getDomainSeperator(
               domainDataToUse,
             );
-            logMessage(domainSeparator);
+            logMessage.info(domainSeparator);
             paramArray.push(domainSeparator);
           }
 

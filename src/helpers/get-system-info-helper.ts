@@ -17,7 +17,6 @@ const domainData = {
   chainId: 0,
 };
 
-// eslint-disable-next-line consistent-return
 export async function getSystemInfo(
   this: Biconomy,
   providerNetworkId: number,
@@ -44,6 +43,12 @@ export async function getSystemInfo(
     this.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
     this.eip712Sign = systemInfo.eip712Sign;
     this.personalSign = systemInfo.personalSign;
+    this.walletFactoryAddress = systemInfo.walletFactoryAddress;
+    this.baseWalletAddress = systemInfo.baseWalletAddress;
+    this.entryPointAddress = systemInfo.entryPointAddress;
+    this.handlerAddress = systemInfo.handlerAddress;
+    this.gnosisSafeProxyFactoryAddress = systemInfo.gnosisSafeProxyFactoryAddress;
+    this.gnosisSafeAddress = systemInfo.gnosisSafeAddress;
 
     if (this.forwarderAddress && this.forwarderAddress !== '') {
       this.biconomyForwarder = new ethers.Contract(
@@ -52,5 +57,7 @@ export async function getSystemInfo(
         this.ethersProvider,
       );
     }
+  } else {
+    throw new Error('System info API call failed');
   }
 }

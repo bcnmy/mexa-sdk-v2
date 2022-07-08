@@ -34,6 +34,8 @@ import {
 } from './helpers/signature-helpers';
 import { sendTransaction } from './helpers/send-transaction-helper';
 import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonalSignMetaTransaction } from './helpers/meta-transaction-custom-helpers';
+import { BiconomyWalletClient } from './BiconomyWalletClient';
+import { GnosisWalletClient } from './GnosisWalletClient';
 
 // TODO
 // add debug and logs enabled logic
@@ -82,6 +84,18 @@ export class Biconomy extends EventEmitter {
 
   forwarderAddress?: string;
 
+  walletFactoryAddress?: string;
+
+  baseWalletAddress?: string;
+
+  entryPointAddress?: string;
+
+  handlerAddress?: string;
+
+  gnosisSafeProxyFactoryAddress?: string;
+
+  gnosisSafeAddress?: string;
+
   ethersProvider: ethers.providers.Web3Provider;
 
   networkId?: number;
@@ -105,6 +119,10 @@ export class Biconomy extends EventEmitter {
   buildSignatureCustomEIP712MetaTransaction = buildSignatureCustomEIP712MetaTransaction;
 
   buildSignatureCustomPersonalSignMetaTransaction = buildSignatureCustomPersonalSignMetaTransaction;
+
+  biconomyWalletClient?: BiconomyWalletClient;
+
+  gnosiWalletClient?: GnosisWalletClient;
 
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
@@ -240,6 +258,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
+      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -257,6 +276,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
+      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -278,6 +298,33 @@ export class Biconomy extends EventEmitter {
           throw new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
         }
         await this.getSystemInfo(providerNetworkId);
+
+        if (
+          this.walletFactoryAddress
+           && this.baseWalletAddress
+            && this.entryPointAddress
+             && this.handlerAddress
+        ) {
+          this.biconomyWalletClient = new BiconomyWalletClient({
+            provider: this.provider,
+            ethersProvider: this.ethersProvider,
+            walletFactoryAddress: this.walletFactoryAddress,
+            baseWalletAddress: this.baseWalletAddress,
+            entryPointAddress: this.entryPointAddress,
+            handlerAddress: this.handlerAddress,
+            networkId: this.networkId,
+          });
+        }
+
+        if (this.gnosisSafeProxyFactoryAddress && this.gnosisSafeAddress) {
+          this.gnosiWalletClient = new GnosisWalletClient({
+            ethersProvider: this.ethersProvider,
+            networkId: this.networkId,
+            apiKey: this.apiKey,
+            gnosisSafeProxyFactoryAddress: this.gnosisSafeProxyFactoryAddress,
+            gnosisSafeAddress: this.gnosisSafeAddress,
+          });
+        }
       } else {
         throw new Error('Could not get network version');
       }
@@ -288,9 +335,8 @@ export class Biconomy extends EventEmitter {
 
   async getDappData() {
     try {
-      const { getDappDataUrl } = config;
       const response = await axios.get(
-        `${getDappDataUrl}`,
+        `${config.metaEntryPointBaseUrl}/api/v1/sdk/dapp/`,
         {
           params: {
             contractAddresses: this.contractAddresses,
@@ -328,7 +374,7 @@ export class Biconomy extends EventEmitter {
         });
       }
     } catch (error) {
-      logMessage(JSON.stringify(error));
+      logMessage.error(JSON.stringify(error));
       throw error;
     }
   }
