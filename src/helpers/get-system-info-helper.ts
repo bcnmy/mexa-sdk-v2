@@ -17,7 +17,6 @@ const domainData = {
   chainId: 0,
 };
 
-// eslint-disable-next-line consistent-return
 export async function getSystemInfo(
   this: Biconomy,
   providerNetworkId: number,
@@ -58,5 +57,7 @@ export async function getSystemInfo(
         this.ethersProvider,
       );
     }
+  } else {
+    throw new Error('System info API call failed');
   }
 }

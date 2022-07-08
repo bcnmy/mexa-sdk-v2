@@ -30,11 +30,11 @@ export async function sendTransaction(this: Biconomy, account: string, data: any
   // Fallback
   // return await fallback()
 
-  logMessage('request body');
-  logMessage(JSON.stringify(data));
+  logMessage.info('request body');
+  logMessage.info(JSON.stringify(data));
 
   const response = await post(options);
-  logMessage(response);
+  logMessage.info(response);
   const result = JSON.parse(response);
 
   if (result.transactionId && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {

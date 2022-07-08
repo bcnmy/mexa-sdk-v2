@@ -1,13 +1,20 @@
+import log4js from 'log4js';
 import { OptionsType } from './common/types';
 
-/**
- * Single method to be used for logging purpose.
- *
- * @param {string} message Message to be logged
- */
-export const logMessage = (message: string) => {
-  console.log(message);
-};
+// log level - ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF
+const logger = log4js.configure({
+  appenders: {
+    console: { type: 'console' },
+  },
+  categories: {
+    trace: { appenders: ['console'], level: 'trace' },
+    debug: { appenders: ['console'], level: 'debug' },
+    info: { appenders: ['console'], level: 'info' },
+    error: { appenders: ['console'], level: 'error' },
+  },
+});
+
+export const logMessage = logger.getLogger('debug');
 
 export const getFetchOptions = (method: string, apiKey: string, data?: string) => ({
   method,

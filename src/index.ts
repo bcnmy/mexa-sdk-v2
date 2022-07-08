@@ -258,7 +258,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -276,7 +276,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -374,7 +374,7 @@ export class Biconomy extends EventEmitter {
         });
       }
     } catch (error) {
-      logMessage(JSON.stringify(error));
+      logMessage.error(JSON.stringify(error));
       throw error;
     }
   }

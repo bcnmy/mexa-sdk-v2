@@ -20,6 +20,7 @@
     "ethers": "^5.6.9",
     "gasless-messaging-sdk": "git+ssh://git@github.com:bcnmy/gasless-messaging-sdk.git",
     "install": "^0.13.0",
+    "log4js": "^6.6.0",
     "mongoose": "^6.4.3",
     "node-fetch": "^3.2.6",
     "request-promise": "^4.2.6"

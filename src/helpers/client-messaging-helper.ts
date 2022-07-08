@@ -18,10 +18,7 @@ export const mexaSdkClientMessenger = async (
     await clientMessenger.connect();
     clientMessenger.createTransactionNotifier(transactionId, {
       onMined: (tx: { transactionId: string; transactionHash: string; }) => {
-        console.log('Tx Hash mined message received at client\n', {
-          id: tx.transactionId,
-          hash: tx.transactionHash,
-        });
+        logMessage.debug(`Tx Hash mined message received at client with id ${tx.transactionId} and hash ${tx.transactionHash}`);
 
         sdkEmitter.emit('txMined', () => ({
           msg: 'txn mined',
@@ -30,10 +27,8 @@ export const mexaSdkClientMessenger = async (
         }));
       },
       onHashGenerated: (tx: { transactionId: string; transactionHash: string; }) => {
-        console.log('Tx Hash generated message received at client\n', {
-          id: tx.transactionId,
-          hash: tx.transactionHash,
-        });
+        logMessage.debug(`Tx Hash generated message received at client ${tx.transactionId} and hash ${tx.transactionHash}`);
+
         sdkEmitter.emit('txHashGenerated', () => ({
           msg: 'hash generated',
           id: tx.transactionId,
@@ -43,7 +38,7 @@ export const mexaSdkClientMessenger = async (
       // TODO
       // Change type in messaging sdk
       onError: (errorResponseData: { error: any; transactionId: string; }) => {
-        console.log('Error message received at client\n', errorResponseData.error);
+        logMessage.error('Error message received at client\n', errorResponseData.error);
         sdkEmitter.emit('onError', () => ({
           // code: errorResponseData.code,
           error: errorResponseData.error,
@@ -52,6 +47,6 @@ export const mexaSdkClientMessenger = async (
       },
     });
   } catch (error) {
-    logMessage(JSON.stringify(error));
+    logMessage.error(JSON.stringify(error));
   }
 };
