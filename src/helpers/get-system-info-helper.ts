@@ -48,6 +48,8 @@ export async function getSystemInfo(
     this.baseWalletAddress = systemInfo.baseWalletAddress;
     this.entryPointAddress = systemInfo.entryPointAddress;
     this.handlerAddress = systemInfo.handlerAddress;
+    this.gnosisSafeProxyFactoryAddress = systemInfo.gnosisSafeProxyFactoryAddress;
+    this.gnosisSafeAddress = systemInfo.gnosisSafeAddress;
 
     if (this.forwarderAddress && this.forwarderAddress !== '') {
       this.biconomyForwarder = new ethers.Contract(

@@ -14,13 +14,27 @@ export const config = {
   NONCE_BATCH_ID: 0,
   EXPIRY: 0,
   BASE_GAS: 0,
-  EIP712_WALLET_TX_TYPE: {
+  EIP712_WALLET_TX_TYPE: { // Biconomy Wallet
     WalletTx: [
       { type: 'address', name: 'to' },
       { type: 'uint256', name: 'value' },
       { type: 'bytes', name: 'data' },
       { type: 'uint8', name: 'operation' },
       { type: 'uint256', name: 'targetTxGas' },
+      { type: 'uint256', name: 'baseGas' },
+      { type: 'uint256', name: 'gasPrice' },
+      { type: 'address', name: 'gasToken' },
+      { type: 'address', name: 'refundReceiver' },
+      { type: 'uint256', name: 'nonce' },
+    ],
+  },
+  EIP712_SAFE_TX_TYPE: { // Gnosis Wallet
+    SafeTx: [
+      { type: 'address', name: 'to' },
+      { type: 'uint256', name: 'value' },
+      { type: 'bytes', name: 'data' },
+      { type: 'uint8', name: 'operation' },
+      { type: 'uint256', name: 'safeTxGas' },
       { type: 'uint256', name: 'baseGas' },
       { type: 'uint256', name: 'gasPrice' },
       { type: 'address', name: 'gasToken' },

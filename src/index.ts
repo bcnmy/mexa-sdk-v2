@@ -35,6 +35,7 @@ import {
 import { sendTransaction } from './helpers/send-transaction-helper';
 import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonalSignMetaTransaction } from './helpers/meta-transaction-custom-helpers';
 import { BiconomyWalletClient } from './BiconomyWalletClient';
+import { GnosisWalletClient } from './GnosisWalletClient';
 
 // TODO
 // add debug and logs enabled logic
@@ -91,6 +92,10 @@ export class Biconomy extends EventEmitter {
 
   handlerAddress?: string;
 
+  gnosisSafeProxyFactoryAddress?: string;
+
+  gnosisSafeAddress?: string;
+
   ethersProvider: ethers.providers.Web3Provider;
 
   networkId?: number;
@@ -116,6 +121,8 @@ export class Biconomy extends EventEmitter {
   buildSignatureCustomPersonalSignMetaTransaction = buildSignatureCustomPersonalSignMetaTransaction;
 
   biconomyWalletClient?: BiconomyWalletClient;
+
+  gnosiWalletClient?: GnosisWalletClient;
 
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
@@ -306,6 +313,15 @@ export class Biconomy extends EventEmitter {
             entryPointAddress: this.entryPointAddress,
             handlerAddress: this.handlerAddress,
             networkId: this.networkId,
+          });
+        }
+
+        if (this.gnosisSafeProxyFactoryAddress && this.gnosisSafeAddress) {
+          this.gnosiWalletClient = new GnosisWalletClient({
+            ethersProvider: this.ethersProvider,
+            networkId: this.networkId,
+            gnosisSafeProxyFactoryAddress: this.gnosisSafeProxyFactoryAddress,
+            gnosisSafeAddress: this.gnosisSafeAddress,
           });
         }
       } else {
