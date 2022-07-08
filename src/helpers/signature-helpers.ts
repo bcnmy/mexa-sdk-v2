@@ -1,9 +1,10 @@
-import { ethers } from 'ethers';
 import abi from 'ethereumjs-abi';
 import { toBuffer, ToBufferInputTypes } from 'ethereumjs-util';
+import { ethers } from 'ethers';
 import type { Biconomy } from '..';
 import { ForwarderDomainData, ForwarderDomainType, ForwardRequestType } from '../common/types';
 import { RESPONSE_CODES } from '../config';
+import { logMessage } from '../utils';
 
 /**
  * Method to get the signature parameters.
@@ -110,8 +111,8 @@ export async function getSignatureEIP712(
     const newSignature = r + s.slice(2) + vNum.slice(2);
     return newSignature;
   } catch (error) {
-    console.log('error inside signature');
-    console.log(error);
+    logMessage.error('error inside signature');
+    logMessage.error(error);
     return '';
   }
 }

@@ -328,7 +328,7 @@ export class Biconomy extends EventEmitter {
         });
       }
     } catch (error) {
-      logMessage(JSON.stringify(error));
+      logMessage.error(JSON.stringify(error));
       throw error;
     }
   }

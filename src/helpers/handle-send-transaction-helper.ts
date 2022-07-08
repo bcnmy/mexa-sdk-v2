@@ -102,40 +102,40 @@ export async function handleSendTransaction(
           signTypedDataType = params[0].signTypedDataType;
         }
 
-        logMessage(params[0]);
-        logMessage(`gas limit : ${gasLimit}`);
+        logMessage.debug(params[0]);
+        logMessage.debug(`gas limit : ${gasLimit}`);
         if (txGas) {
-          logMessage(`tx gas supplied : ${txGas}`);
+          logMessage.info(`tx gas supplied : ${txGas}`);
         }
 
         if (!api) {
-          logMessage(`API not found for method ${methodName}`);
-          logMessage(`Strict mode ${this.strictMode}`);
+          logMessage.info(`API not found for method ${methodName}`);
+          logMessage.info(`Strict mode ${this.strictMode}`);
           if (this.strictMode) {
             throw new Error(`Biconomy strict mode is on. No registered API found for method ${methodName}. Please register API from developer dashboard.`);
           }
-          logMessage(
+          logMessage.info(
             'Falling back to default provider as strict mode is false in biconomy',
           );
           return await fallback();
         }
-        logMessage('API found');
+        logMessage.debug('API found');
 
-        logMessage('Getting user account');
+        logMessage.debug('Getting user account');
         const account = params[0].from;
 
         if (!account) {
           throw new Error('Not able to get user account');
         }
-        logMessage('User account fetched');
+        logMessage.debug('User account fetched');
 
-        logMessage(methodInfo.args);
+        logMessage.debug(methodInfo.args);
 
         const paramArray:Array<any> = [];
 
         if (metaTxApproach === this.trustedForwarderMetaTransaction) {
           let gasLimitNum;
-          logMessage('Smart contract is configured to use Trusted Forwarder as meta transaction type');
+          logMessage.info('Smart contract is configured to use Trusted Forwarder as meta transaction type');
           const forwardedData = params[0].data;
           const signatureFromPayload = params[0].signature;
           // Check if txGas is present, if not calculate gas limit for txGas
@@ -157,16 +157,16 @@ export async function handleSendTransaction(
                 .add(ethers.BigNumber.from(5000))
                 .toNumber();
 
-              logMessage(`Gas limit (txGas) calculated for method ${methodName} in SDK: ${gasLimitNum}`);
+              logMessage.info(`Gas limit (txGas) calculated for method ${methodName} in SDK: ${gasLimitNum}`);
             } else {
               throw new Error('Smart contract ABI not found!');
             }
           } else {
-            logMessage(`txGas supplied for this Trusted Forwarder call is ${Number(txGas)}`);
+            logMessage.info(`txGas supplied for this Trusted Forwarder call is ${Number(txGas)}`);
             gasLimitNum = ethers.BigNumber.from(
               txGas.toString(),
             ).toNumber();
-            logMessage(`gas limit number for txGas ${gasLimitNum}`);
+            logMessage.info(`gas limit number for txGas ${gasLimitNum}`);
           }
 
           // TODO
@@ -187,7 +187,7 @@ export async function handleSendTransaction(
             this.biconomyForwarder.attach(forwarderToAttach),
             customBatchId,
           );
-          logMessage(JSON.stringify(request));
+          logMessage.info(JSON.stringify(request));
 
           paramArray.push(request);
 
@@ -203,18 +203,18 @@ export async function handleSendTransaction(
           }
 
           if (signatureType && signatureType === this.eip712Sign) {
-            logMessage('EIP712 signature flow');
+            logMessage.info('EIP712 signature flow');
             // Update the verifyingContract field of domain data based on the current request
             const domainSeparator = getDomainSeperator(
               domainDataToUse,
             );
-            logMessage('Domain separator to be used:');
-            logMessage(domainSeparator);
+            logMessage.info('Domain separator to be used:');
+            logMessage.info(domainSeparator);
             paramArray.push(domainSeparator);
             let signatureEIP712;
             if (signatureFromPayload) {
               signatureEIP712 = signatureFromPayload;
-              logMessage(`EIP712 signature from payload is ${signatureEIP712}`);
+              logMessage.info(`EIP712 signature from payload is ${signatureEIP712}`);
             } else {
               signatureEIP712 = await this.getSignatureEIP712(
                 account,
@@ -222,20 +222,20 @@ export async function handleSendTransaction(
                 domainDataToUse,
                 signTypedDataType,
               );
-              logMessage(`EIP712 signature is ${signatureEIP712}`);
+              logMessage.info(`EIP712 signature is ${signatureEIP712}`);
             }
             paramArray.push(signatureEIP712);
           } else {
-            logMessage('Personal signature flow');
+            logMessage.info('Personal signature flow');
             let signaturePersonal;
             if (signatureFromPayload) {
               signaturePersonal = signatureFromPayload;
-              logMessage(`Personal signature from payload is ${signaturePersonal}`);
+              logMessage.info(`Personal signature from payload is ${signaturePersonal}`);
             } else {
               signaturePersonal = await this.getSignaturePersonal(
                 request,
               );
-              logMessage(`Personal signature is ${signaturePersonal}`);
+              logMessage.info(`Personal signature is ${signaturePersonal}`);
             }
             if (signaturePersonal) {
               paramArray.push(signaturePersonal);
@@ -271,7 +271,7 @@ export async function handleSendTransaction(
       if (this.strictMode) {
         throw new Error(`Make sure your have smart contract with address ${to} is registered on the dashboard`);
       }
-      logMessage(
+      logMessage.info(
         `Smart contract with address ${to} not found on dashbaord. Strict mode is off, so falling back to normal transaction mode`,
       );
       return await fallback();

@@ -23,8 +23,8 @@ function getSignatureParameters(signature: string) {
   }
   const r = signature.slice(0, 66);
   const s = '0x'.concat(signature.slice(66, 130));
-  let v = '0x'.concat(signature.slice(130, 132));
-  v = ethers.BigNumber.from(v).toNumber();
+  const vInString = '0x'.concat(signature.slice(130, 132));
+  let v = ethers.BigNumber.from(vInString).toNumber();
   if (![27, 28].includes(v)) v += 27;
   return {
     r,
@@ -206,13 +206,13 @@ export class BiconomyWalletClient {
           execTransactionBody.nonce,
         );
         signature = await this.targetProvider.getSigner()
-          .signMessage(ethers.utils.arrayify(transactionHash));
+          .signMessage(ethers.utils.arrayify(transactionHash)) as string;
         const signatureParams = getSignatureParameters(signature);
         let { v } = signatureParams;
         const { r, s } = signatureParams;
         v += 4;
-        v = ethers.BigNumber.from(v).toHexString();
-        signature = r + s.slice(2) + v.slice(2);
+        const vInString = ethers.BigNumber.from(v).toHexString();
+        signature = r + s.slice(2) + vInString.slice(2);
       } else {
         signature = await this.targetProvider.getSigner()._signTypedData(
           { verifyingContract: walletAddress, chainId: this.networkId },

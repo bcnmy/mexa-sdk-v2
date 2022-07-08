@@ -13,19 +13,19 @@ export type BuildExecTransactionParamsType = {
 };
 
 export type SendBiconomyWalletTransactionsParamsType = {
-  execTransactionBody,
+  execTransactionBody: any,
   walletAddress: string,
   signatureType: string,
   signature?: string,
 };
 
 export type BiconomyWalletClientParamsType = {
-  biconomyProvider, // notice we passed engine (Biconomy) here
-  provider,
+  biconomyProvider: any, // notice we passed engine (Biconomy) here
+  provider: any,
   // Either we pass above both or target provider and use API calls to relay
-  targetProvider,
-  biconomyAttributes,
-  isSignerWithAccounts,
+  targetProvider: any,
+  biconomyAttributes: any,
+  isSignerWithAccounts: any,
   walletFactoryAddress: string,
   baseWalletAddress: string,
   entryPointAddress: string,
