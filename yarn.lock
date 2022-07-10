@@ -1553,7 +1553,7 @@ functions-have-names@^1.2.2:
   integrity sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==
 
 gasless-messaging-sdk@/Users/yashasvichaudhary/Documents/Biconomy/infra/gasless-messaging-sdk:
-  version "0.0.1"
+  version "0.0.2"
   dependencies:
     "@types/amqplib" "^0.8.2"
     "@types/jsonwebtoken" "^8.5.8"
