@@ -18,7 +18,7 @@
     "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^7.1.5",
     "ethers": "^5.6.9",
-    "gasless-messaging-sdk": "git+ssh://git@github.com:bcnmy/gasless-messaging-sdk.git",
+    "gasless-messaging-sdk": "/Users/yashasvichaudhary/Documents/Biconomy/infra/gasless-messaging-sdk",
     "install": "^0.13.0",
     "log4js": "^6.6.0",
     "mongoose": "^6.4.3",

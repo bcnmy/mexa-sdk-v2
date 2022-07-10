@@ -1,20 +1,23 @@
-import log4js from 'log4js';
+// import log4js from 'log4js';
 import { OptionsType } from './common/types';
 
 // log level - ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF
-const logger = log4js.configure({
-  appenders: {
-    console: { type: 'console' },
-  },
-  categories: {
-    trace: { appenders: ['console'], level: 'trace' },
-    debug: { appenders: ['console'], level: 'debug' },
-    info: { appenders: ['console'], level: 'info' },
-    error: { appenders: ['console'], level: 'error' },
-  },
-});
+// const logger = log4js.configure({
+//   appenders: {
+//     console: { type: 'console' },
+//   },
+//   categories: {
+//     trace: { appenders: ['console'], level: 'trace' },
+//     debug: { appenders: ['console'], level: 'debug' },
+//     info: { appenders: ['console'], level: 'info' },
+//     error: { appenders: ['console'], level: 'error' },
+//   },
+// });
 
-export const logMessage = logger.getLogger('debug');
+// export const logMessage = logger.getLogger('debug');
+export const logMessage = (message: any) => {
+  console.log(message);
+};
 
 export const getFetchOptions = (method: string, apiKey: string, data?: string) => ({
   method,
@@ -30,7 +33,6 @@ export const formatMessage = (code: string, message: string) => ({ code, message
 /**
  * Validate parameters passed to biconomy object. Dapp id and api key are mandatory.
  * */
-// TODO more options would be added so update this
 export const validateOptions = (options: OptionsType) => {
   if (!options) {
     throw new Error(

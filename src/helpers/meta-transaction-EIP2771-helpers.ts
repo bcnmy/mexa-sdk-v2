@@ -28,8 +28,8 @@ export const findTheRightForwarder = async (
     try {
       forwarder = await contract.trustedForwarder();
     } catch (error) {
-      logMessage.error("Could not find read method 'trustedForwarder' in the contract abi");
-      logMessage.error(JSON.stringify(error));
+      logMessage("Could not find read method 'trustedForwarder' in the contract abi");
+      logMessage(JSON.stringify(error));
     }
 
     for (let i = 0; i < supportedForwarders.length; i += 1) {
@@ -49,8 +49,8 @@ export const findTheRightForwarder = async (
           break;
         }
       } catch (error) {
-        logMessage.error("Could not find read method 'isTrustedForwarder' in the contract abi");
-        logMessage.error(JSON.stringify(error));
+        logMessage("Could not find read method 'isTrustedForwarder' in the contract abi");
+        logMessage(JSON.stringify(error));
       }
     }
   }

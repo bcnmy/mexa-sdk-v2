@@ -37,8 +37,6 @@ import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonal
 import { BiconomyWalletClient } from './BiconomyWalletClient';
 import { GnosisWalletClient } from './GnosisWalletClient';
 
-// TODO
-// add debug and logs enabled logic
 export class Biconomy extends EventEmitter {
   apiKey: string;
 
@@ -124,6 +122,12 @@ export class Biconomy extends EventEmitter {
 
   gnosiWalletClient?: GnosisWalletClient;
 
+  /**
+   * constructor would initiliase providers and set values passed in options
+   * strictMode true would return error, strictMode false would fallback to default provider
+   * externalProvider is the provider dev passes (ex. window.ethereum)
+   * this.provider is the proxy provider object that would intercept all rpc calls for the SDK
+   */
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
     validateOptions(options);
@@ -258,7 +262,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -276,7 +280,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -292,11 +296,16 @@ export class Biconomy extends EventEmitter {
       this.signer = this.ethersProvider.getSigner();
       await this.getDappData();
       const providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
+      console.log('providerNetworkId', providerNetworkId);
+      console.log('this.networkId', this.networkId);
 
       if (providerNetworkId) {
+        console.log('found oroviderNetworkId');
         if (providerNetworkId !== this.networkId) {
+          console.log('network id not matched');
           throw new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
         }
+        console.log('Making system info call');
         await this.getSystemInfo(providerNetworkId);
 
         if (
@@ -350,7 +359,7 @@ export class Biconomy extends EventEmitter {
       const { data } = response.data;
       const { dapp, smartContracts, metaApis } = data;
 
-      this.networkId = dapp.networkId;
+      this.networkId = parseInt(dapp.networkId, 10);
       this.dappId = dapp._id;
 
       if (smartContracts && smartContracts.length > 0) {
@@ -373,8 +382,10 @@ export class Biconomy extends EventEmitter {
           this.dappApiMap[`${contractAddress.toLowerCase()}-${method}`] = metaApi;
         });
       }
+      console.log('dapp data fetched');
     } catch (error) {
-      logMessage.error(JSON.stringify(error));
+      console.log(error);
+      logMessage(JSON.stringify(error));
       throw error;
     }
   }

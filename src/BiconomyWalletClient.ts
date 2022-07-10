@@ -241,7 +241,7 @@ export class BiconomyWalletClient {
       tx = await dispatchProvider.send('eth_sendTransaction', [txParams]);
     } catch (err) {
       // handle conditional rejections in this stack trace
-      logMessage.error(JSON.stringify(err));
+      logMessage(JSON.stringify(err));
       throw err;
     }
     return tx;

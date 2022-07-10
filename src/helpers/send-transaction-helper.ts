@@ -30,17 +30,20 @@ export async function sendTransaction(this: Biconomy, account: string, data: any
   // Fallback
   // return await fallback()
 
-  logMessage.info('request body');
-  logMessage.info(JSON.stringify(data));
+  logMessage('request body');
+  logMessage(JSON.stringify(data));
 
   const response = await post(options);
-  logMessage.info(response);
+  logMessage(response);
   const result = JSON.parse(response);
 
   if (result.transactionId && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {
-    await mexaSdkClientMessenger({
-      transactionId: result.transactionId,
-    });
+    await mexaSdkClientMessenger(
+      this,
+      {
+        transactionId: result.transactionId,
+      },
+    );
   }
   const error: any = {};
   error.code = result.flag || result.code;
