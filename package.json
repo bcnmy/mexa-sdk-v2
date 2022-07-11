@@ -1,15 +1,16 @@
 {
   "name": "mexa-sdk-v2",
-  "version": "1.0.0",
-  "main": "./dist/src/index.js",
+  "version": "1.0.1",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "repository": "https://github.com/bcnmy/mexa-sdk-v2.git",
   "author": "arcticfloyd1984 <yashasvichaudhry98@gmail.com>",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
     "lint": "eslint --fix --ext .ts .",
-    "start": "node ./dist/src/index.js",
-    "dev": "ts-node ./src/index.ts"
+    "start": "node ./dist/index.js",
+    "dev": "ts-node ./index.ts"
   },
   "dependencies": {
     "@ethersproject/providers": "^5.6.4",
@@ -21,7 +22,6 @@
     "gasless-messaging-sdk": "^0.0.5",
     "install": "^0.13.0",
     "isomorphic-ws": "^5.0.0",
-    "log4js": "^6.6.0",
     "mongoose": "^6.4.3",
     "node-fetch": "^3.2.6",
     "request-promise": "^4.2.6",
