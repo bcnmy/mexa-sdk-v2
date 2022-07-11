@@ -12,11 +12,11 @@ export const mexaSdkClientMessenger = async (
       onMined: (tx: { transactionId: string; transactionHash: string; }) => {
         logMessage(`Tx Hash mined message received at client with id ${tx.transactionId} and hash ${tx.transactionHash}`);
 
-        engine.emit('txMined', () => ({
+        engine.emit('txMined', {
           msg: 'txn mined',
           id: tx.transactionId,
           hash: tx.transactionHash,
-        }));
+        });
       },
       onHashGenerated: (tx: { transactionId: string; transactionHash: string; }) => {
         logMessage(`Tx Hash generated message received at client ${tx.transactionId} and hash ${tx.transactionHash}`);
