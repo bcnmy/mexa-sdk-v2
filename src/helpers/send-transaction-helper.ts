@@ -11,7 +11,12 @@ import { mexaSdkClientMessenger } from './client-messaging-helper';
  * @param account User selected account on current wallet
  * @param data Data to be sent to biconomy server having transaction data
  * */
-export async function sendTransaction(this: Biconomy, account: string, data: any) {
+export async function sendTransaction(
+  this: Biconomy,
+  account: string,
+  data: any,
+  fallback: () => Promise<any> | void | undefined,
+) {
   if (!this || !account || !data) {
     return undefined;
   }
@@ -26,21 +31,22 @@ export async function sendTransaction(this: Biconomy, account: string, data: any
     body: JSON.stringify(data),
   };
 
-  // TODO
-  // Fallback
-  // return await fallback()
-
-  logMessage.info('request body');
-  logMessage.info(JSON.stringify(data));
+  logMessage('request body');
+  logMessage(JSON.stringify(data));
 
   const response = await post(options);
-  logMessage.info(response);
+  logMessage(response);
   const result = JSON.parse(response);
 
   if (result.transactionId && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {
-    await mexaSdkClientMessenger({
-      transactionId: result.transactionId,
-    });
+    await mexaSdkClientMessenger(
+      this,
+      {
+        transactionId: result.transactionId,
+      },
+    );
+  } else if (result.flag === BICONOMY_RESPONSE_CODES.BAD_REQUEST) {
+    await fallback();
   }
   const error: any = {};
   error.code = result.flag || result.code;

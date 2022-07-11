@@ -110,8 +110,8 @@ export async function getSignatureEIP712(
     const newSignature = r + s.slice(2) + vNum.slice(2);
     return newSignature;
   } catch (error) {
-    logMessage.error('error inside signature');
-    logMessage.error(error);
+    logMessage('error inside signature');
+    logMessage(error);
     return '';
   }
 }

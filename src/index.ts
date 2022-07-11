@@ -6,6 +6,8 @@ import EventEmitter from 'events';
 import { ExternalProvider } from '@ethersproject/providers';
 import { ethers } from 'ethers';
 import axios from 'axios';
+import { ClientMessenger } from 'gasless-messaging-sdk';
+import WebSocket from 'isomorphic-ws';
 import {
   DappApiMapType,
   ForwarderDomainData,
@@ -37,8 +39,6 @@ import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonal
 import { BiconomyWalletClient } from './BiconomyWalletClient';
 import { GnosisWalletClient } from './GnosisWalletClient';
 
-// TODO
-// add debug and logs enabled logic
 export class Biconomy extends EventEmitter {
   apiKey: string;
 
@@ -124,6 +124,14 @@ export class Biconomy extends EventEmitter {
 
   gnosiWalletClient?: GnosisWalletClient;
 
+  clientMessenger: any;
+
+  /**
+   * constructor would initiliase providers and set values passed in options
+   * strictMode true would return error, strictMode false would fallback to default provider
+   * externalProvider is the provider dev passes (ex. window.ethereum)
+   * this.provider is the proxy provider object that would intercept all rpc calls for the SDK
+   */
   constructor(provider: ExternalProvider, options: OptionsType) {
     super();
     validateOptions(options);
@@ -133,6 +141,10 @@ export class Biconomy extends EventEmitter {
     this.provider = this.proxyFactory();
     this.contractAddresses = options.contractAddresses;
     this.ethersProvider = new ethers.providers.Web3Provider(provider);
+    this.clientMessenger = new ClientMessenger(
+      config.webSocketConnectionUrl,
+      WebSocket,
+    );
 
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
@@ -258,7 +270,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -276,7 +288,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage.error(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -291,6 +303,13 @@ export class Biconomy extends EventEmitter {
     try {
       this.signer = this.ethersProvider.getSigner();
       await this.getDappData();
+      try {
+        if (!this.clientMessenger.socketClient.isConnected()) {
+          await this.clientMessenger.connect();
+        }
+      } catch (error) {
+        logMessage(`Error while connecting to socket server ${JSON.stringify(error)}`);
+      }
       const providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
 
       if (providerNetworkId) {
@@ -329,6 +348,7 @@ export class Biconomy extends EventEmitter {
         throw new Error('Could not get network version');
       }
     } catch (error) {
+      logMessage(error);
       return error;
     }
   }
@@ -350,7 +370,7 @@ export class Biconomy extends EventEmitter {
       const { data } = response.data;
       const { dapp, smartContracts, metaApis } = data;
 
-      this.networkId = dapp.networkId;
+      this.networkId = parseInt(dapp.networkId, 10);
       this.dappId = dapp._id;
 
       if (smartContracts && smartContracts.length > 0) {
@@ -373,8 +393,12 @@ export class Biconomy extends EventEmitter {
           this.dappApiMap[`${contractAddress.toLowerCase()}-${method}`] = metaApi;
         });
       }
+      console.log('dappApiMap', this.dappApiMap);
+      console.log('interfaceMap', this.interfaceMap);
+      console.log('dapp data fetched');
     } catch (error) {
-      logMessage.error(JSON.stringify(error));
+      console.log(error);
+      logMessage(JSON.stringify(error));
       throw error;
     }
   }

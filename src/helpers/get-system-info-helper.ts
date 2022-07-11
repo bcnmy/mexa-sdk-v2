@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
   config,
 } from '../config';
-// import { formatMessage, logMessage } from '../utils';
+import { logMessage } from '../utils';
 
 import { biconomyForwarderAbi } from '../abis';
 import type { Biconomy } from '..';
@@ -22,6 +22,7 @@ export async function getSystemInfo(
   providerNetworkId: number,
 ) {
   domainData.chainId = providerNetworkId;
+  logMessage('Making system info call to get contract addresses');
   const response: SystemInfoResponse = await axios.get(
     `${config.metaEntryPointBaseUrl}/api/v1/systemInfo/?networkId=${providerNetworkId}`,
     {
@@ -58,6 +59,7 @@ export async function getSystemInfo(
       );
     }
   } else {
+    logMessage(`System info response: ${JSON.stringify(systemInfoResponse)}`);
     throw new Error('System info API call failed');
   }
 }

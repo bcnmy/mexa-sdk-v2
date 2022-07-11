@@ -1,13 +1,11 @@
-// TODO
-// Review and update URLs
 export const config = {
   SCW: 'SCW',
-  metaEntryPointBaseUrl: 'https://gasless-meta.staging.biconomy.io',
+  metaEntryPointBaseUrl: 'https://gasless-meta.prod.biconomy.io',
+  webSocketConnectionUrl: 'wss://gasless-ws.prod.biconomy.io/connection/websocket',
   JSON_RPC_VERSION: '2.0',
   eip712SigVersion: '1',
   eip712DomainName: 'Biconomy Meta Transaction',
   eip712VerifyingContract: '0x3457dC2A8Ff1d3FcC45eAd532CA1740f5c477160',
-  socketClientEndpoint: 'wss://gasless-staging-wss.biconomy.io/connection/websocket',
   DEFAULT_RELAYER_PAYMENT_TOKEN_ADDRESS: '0x0000000000000000000000000000000000000000',
   DEFAULT_RELAYER_PAYMENT_AMOUNT: 0,
   ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
@@ -72,7 +70,7 @@ export const RESPONSE_CODES = {
   INVALID_OPERATION: 'B515',
   WRONG_ABI: 'B516',
   INTERFACE_MAP_UNDEFINED: 'B517',
-  DAPP_API_MAP_UNDEFINED: 'B518', // TODO convert to enum all error codes
+  DAPP_API_MAP_UNDEFINED: 'B518',
   SMART_CONTRACT_METATRANSACTION_MAP_UNDEFINED: 'B519',
   SMART_CONTRACT_MAP_UNDEFINED: 'B520',
   FORWARDER_DOMAIN_DATA_UNDEFINED: 'B521',
@@ -92,6 +90,7 @@ export const BICONOMY_RESPONSE_CODES = {
   ACTION_COMPLETE: 143,
   USER_CONTRACT_NOT_FOUND: 148,
   ERROR_RESPONSE: 144,
+  BAD_REQUEST: 400,
 };
 
 export const HTTP_CODES = {
