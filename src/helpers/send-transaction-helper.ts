@@ -26,6 +26,7 @@ export async function sendTransaction(
     headers: {
       'x-api-key': this.apiKey,
       'Content-Type': 'application/json;charset=utf-8',
+      version: config.PACKAGE_VERSION,
     },
     timeout: 600000, // 10 min
     body: JSON.stringify(data),

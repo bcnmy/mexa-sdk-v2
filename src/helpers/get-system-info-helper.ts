@@ -28,6 +28,7 @@ export async function getSystemInfo(
     {
       headers: {
         'Content-Type': 'application/json;charset=utf-8',
+        version: config.PACKAGE_VERSION,
       },
     },
   );

@@ -1,4 +1,5 @@
 export const config = {
+  PACKAGE_VERSION: process.env.npm_package_version || '1.0.4',
   SCW: 'SCW',
   metaEntryPointBaseUrl: 'https://gasless-meta.prod.biconomy.io',
   webSocketConnectionUrl: 'wss://gasless-ws.prod.biconomy.io/connection/websocket',
