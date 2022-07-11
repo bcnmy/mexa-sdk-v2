@@ -364,6 +364,7 @@ export class Biconomy extends EventEmitter {
           headers: {
             'x-api-key': this.apiKey,
             'Content-Type': 'application/json;charset=utf-8',
+            version: config.PACKAGE_VERSION,
           },
         },
       );
