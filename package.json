@@ -1,6 +1,6 @@
 {
   "name": "mexa-sdk-v2",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "repository": "https://github.com/bcnmy/mexa-sdk-v2.git",
@@ -10,7 +10,8 @@
     "build": "tsc",
     "lint": "eslint --fix --ext .ts .",
     "start": "node ./dist/index.js",
-    "dev": "ts-node ./index.ts"
+    "dev": "ts-node ./index.ts",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "@ethersproject/providers": "^5.6.4",
