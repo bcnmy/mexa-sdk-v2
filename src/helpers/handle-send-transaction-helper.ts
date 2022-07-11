@@ -59,6 +59,7 @@ export async function handleSendTransaction(
     const {
       params, fallback,
     } = handleSendTransactionParams;
+    console.log('hello in mexa sdk v2');
 
     if (params && params[0] && params[0].to) {
       const to = params[0].to.toLowerCase();
@@ -252,7 +253,7 @@ export async function handleSendTransaction(
               ? this.eip712Sign : this.personalSign,
           };
 
-          return await this.sendTransaction(account, data);
+          return await this.sendTransaction(account, data, fallback);
         }
         paramArray.push(...methodInfo.args);
 
@@ -264,7 +265,7 @@ export async function handleSendTransaction(
           to,
         };
 
-        return await this.sendTransaction(account, data);
+        return await this.sendTransaction(account, data, fallback);
       }
       if (this.strictMode) {
         throw new Error(`Make sure your have smart contract with address ${to} is registered on the dashboard`);
@@ -278,6 +279,7 @@ export async function handleSendTransaction(
       params,
     )}. Expecting params key to be an array with first element having a 'to' property`);
   } catch (error) {
+    console.log(error);
     return error;
   }
 }

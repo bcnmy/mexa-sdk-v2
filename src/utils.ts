@@ -1,20 +1,5 @@
-// import log4js from 'log4js';
 import { OptionsType } from './common/types';
 
-// log level - ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < MARK < OFF
-// const logger = log4js.configure({
-//   appenders: {
-//     console: { type: 'console' },
-//   },
-//   categories: {
-//     trace: { appenders: ['console'], level: 'trace' },
-//     debug: { appenders: ['console'], level: 'debug' },
-//     info: { appenders: ['console'], level: 'info' },
-//     error: { appenders: ['console'], level: 'error' },
-//   },
-// });
-
-// export const logMessage = logger.getLogger('debug');
 export const logMessage = (message: any) => {
   console.log(message);
 };

@@ -253,7 +253,7 @@ export async function sendSignedTransaction(
             to,
             signatureType: signatureType ? this.eip712Sign : this.personalSign,
           };
-          await this.sendTransaction(account, trustedForwarderMetaTransactionData);
+          await this.sendTransaction(account, trustedForwarderMetaTransactionData, fallback);
         }
         paramArray.push(...methodInfo.args);
 
@@ -265,7 +265,7 @@ export async function sendSignedTransaction(
           to: decodedTx.to.toLowerCase(),
         };
 
-        await this.sendTransaction(account, defaultMetaTransactionData);
+        await this.sendTransaction(account, defaultMetaTransactionData, fallback);
       } else {
         const error = formatMessage(
           RESPONSE_CODES.INVALID_PAYLOAD,

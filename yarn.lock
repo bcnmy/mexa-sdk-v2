@@ -1552,8 +1552,10 @@ functions-have-names@^1.2.2:
   resolved "https://registry.yarnpkg.com/functions-have-names/-/functions-have-names-1.2.3.tgz#0404fe4ee2ba2f607f0e0ec3c80bae994133b834"
   integrity sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==
 
-gasless-messaging-sdk@/Users/yashasvichaudhary/Documents/Biconomy/infra/gasless-messaging-sdk:
-  version "0.0.2"
+gasless-messaging-sdk@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/gasless-messaging-sdk/-/gasless-messaging-sdk-0.0.5.tgz#1db980539c8f7341848efa4fa956b8d35ce1c8e9"
+  integrity sha512-F6bweN6d0n60WlyoS6Jc7OdnI8FuQkh/kb52gW/f7tiaZOAvFkrYXXYWgPt+QJUbIwD9qdEn2MlsEHCA6ffJ+g==
   dependencies:
     "@types/amqplib" "^0.8.2"
     "@types/jsonwebtoken" "^8.5.8"
@@ -1562,7 +1564,7 @@ gasless-messaging-sdk@/Users/yashasvichaudhary/Documents/Biconomy/infra/gasless-
     cent.js "^2.0.2"
     centrifuge "^2.8.4"
     jsonwebtoken "^8.5.1"
-    ws "^8.5.0"
+    ws "^8.8.0"
 
 get-intrinsic@^1.0.2, get-intrinsic@^1.1.0, get-intrinsic@^1.1.1:
   version "1.1.2"
@@ -1869,6 +1871,11 @@ isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
   integrity sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==
+
+isomorphic-ws@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/isomorphic-ws/-/isomorphic-ws-5.0.0.tgz#e5529148912ecb9b451b46ed44d53dae1ce04bbf"
+  integrity sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==
 
 js-sha3@0.5.7:
   version "0.5.7"
@@ -2841,7 +2848,7 @@ ws@7.4.6:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.6.tgz#5654ca8ecdeee47c33a9a4bf6d28e2be2980377c"
   integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==
 
-ws@^8.5.0:
+ws@^8.8.0:
   version "8.8.0"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.8.0.tgz#8e71c75e2f6348dbf8d78005107297056cb77769"
   integrity sha512-JDAgSYQ1ksuwqfChJusw1LSJ8BizJ2e/vVu5Lxjq3YvNJNlROv1ui4i+c/kUUrPheBvQl4c5UbERhTwKa6QBJQ==

@@ -6,6 +6,8 @@ import EventEmitter from 'events';
 import { ExternalProvider } from '@ethersproject/providers';
 import { ethers } from 'ethers';
 import axios from 'axios';
+import { ClientMessenger } from 'gasless-messaging-sdk';
+import WebSocket from 'isomorphic-ws';
 import {
   DappApiMapType,
   ForwarderDomainData,
@@ -122,6 +124,8 @@ export class Biconomy extends EventEmitter {
 
   gnosiWalletClient?: GnosisWalletClient;
 
+  clientMessenger: any;
+
   /**
    * constructor would initiliase providers and set values passed in options
    * strictMode true would return error, strictMode false would fallback to default provider
@@ -137,6 +141,10 @@ export class Biconomy extends EventEmitter {
     this.provider = this.proxyFactory();
     this.contractAddresses = options.contractAddresses;
     this.ethersProvider = new ethers.providers.Web3Provider(provider);
+    this.clientMessenger = new ClientMessenger(
+      config.webSocketConnectionUrl,
+      WebSocket,
+    );
 
     if (options.jsonRpcUrl) {
       this.readOnlyProvider = new ethers.providers.JsonRpcProvider(options.jsonRpcUrl);
@@ -295,17 +303,19 @@ export class Biconomy extends EventEmitter {
     try {
       this.signer = this.ethersProvider.getSigner();
       await this.getDappData();
+      try {
+        if (!this.clientMessenger.socketClient.isConnected()) {
+          await this.clientMessenger.connect();
+        }
+      } catch (error) {
+        logMessage(`Error while connecting to socket server ${JSON.stringify(error)}`);
+      }
       const providerNetworkId = (await this.ethersProvider.getNetwork()).chainId;
-      console.log('providerNetworkId', providerNetworkId);
-      console.log('this.networkId', this.networkId);
 
       if (providerNetworkId) {
-        console.log('found oroviderNetworkId');
         if (providerNetworkId !== this.networkId) {
-          console.log('network id not matched');
           throw new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
         }
-        console.log('Making system info call');
         await this.getSystemInfo(providerNetworkId);
 
         if (
@@ -338,6 +348,7 @@ export class Biconomy extends EventEmitter {
         throw new Error('Could not get network version');
       }
     } catch (error) {
+      logMessage(error);
       return error;
     }
   }
@@ -382,6 +393,8 @@ export class Biconomy extends EventEmitter {
           this.dappApiMap[`${contractAddress.toLowerCase()}-${method}`] = metaApi;
         });
       }
+      console.log('dappApiMap', this.dappApiMap);
+      console.log('interfaceMap', this.interfaceMap);
       console.log('dapp data fetched');
     } catch (error) {
       console.log(error);
