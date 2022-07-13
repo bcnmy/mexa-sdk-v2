@@ -1,5 +1,6 @@
 import { OptionsType } from './common/types';
 export declare const logMessage: (message: any) => void;
+export declare const logErrorMessage: (errorMessage: any) => void;
 export declare const getFetchOptions: (method: string, apiKey: string, data?: string) => {
     method: string;
     headers: {

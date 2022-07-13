@@ -24,6 +24,7 @@ import {
   SmartContractType,
 } from './common/types';
 import {
+  logErrorMessage,
   logMessage, validateOptions,
 } from './utils';
 import { config } from './config';
@@ -394,12 +395,8 @@ export class Biconomy extends EventEmitter {
           this.dappApiMap[`${contractAddress.toLowerCase()}-${method}`] = metaApi;
         });
       }
-      console.log('dappApiMap', this.dappApiMap);
-      console.log('interfaceMap', this.interfaceMap);
-      console.log('dapp data fetched');
     } catch (error) {
-      console.log(error);
-      logMessage(JSON.stringify(error));
+      logErrorMessage(error);
       throw error;
     }
   }

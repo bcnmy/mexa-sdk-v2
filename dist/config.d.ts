@@ -1,4 +1,5 @@
 export declare const config: {
+    PACKAGE_VERSION: string;
     SCW: string;
     metaEntryPointBaseUrl: string;
     webSocketConnectionUrl: string;

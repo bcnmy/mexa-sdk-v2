@@ -1,5 +1,5 @@
 /* eslint-disable consistent-return */
-import { logMessage } from '../utils';
+import { logErrorMessage, logMessage } from '../utils';
 import type { Biconomy } from '..';
 
 export const mexaSdkClientMessenger = async (
@@ -36,7 +36,6 @@ export const mexaSdkClientMessenger = async (
       },
     });
   } catch (error) {
-    logMessage(error);
-    logMessage(JSON.stringify(error));
+    logErrorMessage(error);
   }
 };

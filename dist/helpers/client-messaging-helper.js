@@ -42,8 +42,7 @@ const mexaSdkClientMessenger = (engine, transactionData) => __awaiter(void 0, vo
         });
     }
     catch (error) {
-        (0, utils_1.logMessage)(error);
-        (0, utils_1.logMessage)(JSON.stringify(error));
+        (0, utils_1.logErrorMessage)(error);
     }
 });
 exports.mexaSdkClientMessenger = mexaSdkClientMessenger;

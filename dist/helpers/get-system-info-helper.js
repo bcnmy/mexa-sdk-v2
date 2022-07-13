@@ -28,39 +28,45 @@ const domainData = {
 };
 function getSystemInfo(providerNetworkId) {
     return __awaiter(this, void 0, void 0, function* () {
-        domainData.chainId = providerNetworkId;
-        (0, utils_1.logMessage)('Making system info call to get contract addresses');
-        const response = yield axios_1.default.get(`${config_1.config.metaEntryPointBaseUrl}/api/v1/systemInfo/?networkId=${providerNetworkId}`, {
-            headers: {
-                'Content-Type': 'application/json;charset=utf-8',
-            },
-        });
-        const systemInfoResponse = response.data.response;
-        if (systemInfoResponse.code === '200' && systemInfoResponse.data) {
-            const systemInfo = systemInfoResponse.data;
-            this.forwarderDomainType = systemInfo.forwarderDomainType;
-            this.defaultMetaTransaction = types_1.ContractMetaTransactionType.DEFAULT;
-            this.trustedForwarderMetaTransaction = types_1.ContractMetaTransactionType.EIP2771;
-            this.forwardRequestType = systemInfo.forwardRequestType;
-            this.forwarderDomainData = systemInfo.forwarderDomainData;
-            this.forwarderDomainDetails = systemInfo.forwarderDomainDetails;
-            this.forwarderAddress = systemInfo.biconomyForwarderAddress;
-            this.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
-            this.eip712Sign = systemInfo.eip712Sign;
-            this.personalSign = systemInfo.personalSign;
-            this.walletFactoryAddress = systemInfo.walletFactoryAddress;
-            this.baseWalletAddress = systemInfo.baseWalletAddress;
-            this.entryPointAddress = systemInfo.entryPointAddress;
-            this.handlerAddress = systemInfo.handlerAddress;
-            this.gnosisSafeProxyFactoryAddress = systemInfo.gnosisSafeProxyFactoryAddress;
-            this.gnosisSafeAddress = systemInfo.gnosisSafeAddress;
-            if (this.forwarderAddress && this.forwarderAddress !== '') {
-                this.biconomyForwarder = new ethers_1.ethers.Contract(this.forwarderAddress, abis_1.biconomyForwarderAbi, this.ethersProvider);
+        try {
+            domainData.chainId = providerNetworkId;
+            (0, utils_1.logMessage)('Making system info call to get contract addresses');
+            const response = yield axios_1.default.get(`${config_1.config.metaEntryPointBaseUrl}/api/v1/systemInfo/?networkId=${providerNetworkId}`, {
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8',
+                    version: config_1.config.PACKAGE_VERSION,
+                },
+            });
+            const systemInfoResponse = response.data.response;
+            if (systemInfoResponse.code === '200' && systemInfoResponse.data) {
+                const systemInfo = systemInfoResponse.data;
+                this.forwarderDomainType = systemInfo.forwarderDomainType;
+                this.defaultMetaTransaction = types_1.ContractMetaTransactionType.DEFAULT;
+                this.trustedForwarderMetaTransaction = types_1.ContractMetaTransactionType.EIP2771;
+                this.forwardRequestType = systemInfo.forwardRequestType;
+                this.forwarderDomainData = systemInfo.forwarderDomainData;
+                this.forwarderDomainDetails = systemInfo.forwarderDomainDetails;
+                this.forwarderAddress = systemInfo.biconomyForwarderAddress;
+                this.forwarderAddresses = systemInfo.biconomyForwarderAddresses;
+                this.eip712Sign = systemInfo.eip712Sign;
+                this.personalSign = systemInfo.personalSign;
+                this.walletFactoryAddress = systemInfo.walletFactoryAddress;
+                this.baseWalletAddress = systemInfo.baseWalletAddress;
+                this.entryPointAddress = systemInfo.entryPointAddress;
+                this.handlerAddress = systemInfo.handlerAddress;
+                this.gnosisSafeProxyFactoryAddress = systemInfo.gnosisSafeProxyFactoryAddress;
+                this.gnosisSafeAddress = systemInfo.gnosisSafeAddress;
+                if (this.forwarderAddress && this.forwarderAddress !== '') {
+                    this.biconomyForwarder = new ethers_1.ethers.Contract(this.forwarderAddress, abis_1.biconomyForwarderAbi, this.ethersProvider);
+                }
+            }
+            else {
+                (0, utils_1.logMessage)(`System info response: ${JSON.stringify(systemInfoResponse)}`);
+                throw new Error('System info API call failed');
             }
         }
-        else {
-            (0, utils_1.logMessage)(`System info response: ${JSON.stringify(systemInfoResponse)}`);
-            throw new Error('System info API call failed');
+        catch (error) {
+            (0, utils_1.logErrorMessage)(error);
         }
     });
 }

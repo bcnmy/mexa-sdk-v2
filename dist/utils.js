@@ -1,10 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decodeMethod = exports.validateOptions = exports.formatMessage = exports.getFetchOptions = exports.logMessage = void 0;
+exports.decodeMethod = exports.validateOptions = exports.formatMessage = exports.getFetchOptions = exports.logErrorMessage = exports.logMessage = void 0;
+const serialize_error_1 = require("serialize-error");
 const logMessage = (message) => {
     console.log(message);
 };
 exports.logMessage = logMessage;
+const logErrorMessage = (errorMessage) => {
+    console.error((0, serialize_error_1.serializeError)(errorMessage));
+};
+exports.logErrorMessage = logErrorMessage;
 const getFetchOptions = (method, apiKey, data) => ({
     method,
     headers: {

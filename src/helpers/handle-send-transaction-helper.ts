@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { HandleSendTransactionParamsType } from '../common/types';
-import { decodeMethod, logMessage } from '../utils';
+import { decodeMethod, logErrorMessage, logMessage } from '../utils';
 import { buildForwardTxRequest, findTheRightForwarder, getDomainSeperator } from './meta-transaction-EIP2771-helpers';
 import type { Biconomy } from '..';
 
@@ -279,7 +279,7 @@ export async function handleSendTransaction(
       params,
     )}. Expecting params key to be an array with first element having a 'to' property`);
   } catch (error) {
-    console.log(error);
+    logErrorMessage(error);
     return error;
   }
 }

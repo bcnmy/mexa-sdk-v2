@@ -224,7 +224,7 @@ function handleSendTransaction(handleSendTransactionParams) {
             throw new Error(`Invalid payload data ${JSON.stringify(params)}. Expecting params key to be an array with first element having a 'to' property`);
         }
         catch (error) {
-            console.log(error);
+            (0, utils_1.logErrorMessage)(error);
             return error;
         }
     });

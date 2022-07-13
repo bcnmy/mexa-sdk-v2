@@ -1,7 +1,12 @@
+import { serializeError } from 'serialize-error';
 import { OptionsType } from './common/types';
 
 export const logMessage = (message: any) => {
   console.log(message);
+};
+
+export const logErrorMessage = (errorMessage: any) => {
+  console.error(serializeError(errorMessage));
 };
 
 export const getFetchOptions = (method: string, apiKey: string, data?: string) => ({

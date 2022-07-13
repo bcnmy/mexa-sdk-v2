@@ -61,6 +61,7 @@ class GnosisWalletClient {
                     'Content-Type': 'application/json;charset=utf-8',
                     authToken,
                     apiKey: this.apiKey,
+                    version: config_1.config.PACKAGE_VERSION,
                 },
             });
         });

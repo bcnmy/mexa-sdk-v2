@@ -23,38 +23,45 @@ const client_messaging_helper_1 = require("./client-messaging-helper");
  * */
 function sendTransaction(account, data, fallback) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (!this || !account || !data) {
-            return undefined;
+        try {
+            if (!this || !account || !data) {
+                return undefined;
+            }
+            const options = {
+                uri: `${config_1.config.metaEntryPointBaseUrl}/api/v2/meta-tx/native`,
+                headers: {
+                    'x-api-key': this.apiKey,
+                    'Content-Type': 'application/json;charset=utf-8',
+                    version: config_1.config.PACKAGE_VERSION,
+                },
+                timeout: 600000,
+                body: JSON.stringify(data),
+            };
+            (0, utils_1.logMessage)('request body');
+            (0, utils_1.logMessage)(JSON.stringify(data));
+            const response = yield (0, request_promise_1.post)(options);
+            (0, utils_1.logMessage)(response);
+            const result = JSON.parse(response);
+            if (result.transactionId && result.flag === config_1.BICONOMY_RESPONSE_CODES.SUCCESS) {
+                yield (0, client_messaging_helper_1.mexaSdkClientMessenger)(this, {
+                    transactionId: result.transactionId,
+                });
+            }
+            else if (result.flag === config_1.BICONOMY_RESPONSE_CODES.BAD_REQUEST) {
+                yield fallback();
+            }
+            const error = {};
+            error.code = result.flag || result.code;
+            if (result.flag === config_1.BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
+                error.code = config_1.RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;
+            }
+            error.message = result.log || result.message;
+            return error.toString();
         }
-        const options = {
-            uri: `${config_1.config.metaEntryPointBaseUrl}/api/v2/meta-tx/native`,
-            headers: {
-                'x-api-key': this.apiKey,
-                'Content-Type': 'application/json;charset=utf-8',
-            },
-            timeout: 600000,
-            body: JSON.stringify(data),
-        };
-        (0, utils_1.logMessage)('request body');
-        (0, utils_1.logMessage)(JSON.stringify(data));
-        const response = yield (0, request_promise_1.post)(options);
-        (0, utils_1.logMessage)(response);
-        const result = JSON.parse(response);
-        if (result.transactionId && result.flag === config_1.BICONOMY_RESPONSE_CODES.SUCCESS) {
-            yield (0, client_messaging_helper_1.mexaSdkClientMessenger)(this, {
-                transactionId: result.transactionId,
-            });
+        catch (error) {
+            (0, utils_1.logErrorMessage)(error);
+            return error;
         }
-        else if (result.flag === config_1.BICONOMY_RESPONSE_CODES.BAD_REQUEST) {
-            yield fallback();
-        }
-        const error = {};
-        error.code = result.flag || result.code;
-        if (result.flag === config_1.BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
-            error.code = config_1.RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;
-        }
-        error.message = result.log || result.message;
-        return error.toString();
     });
 }
 exports.sendTransaction = sendTransaction;

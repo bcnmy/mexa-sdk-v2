@@ -267,6 +267,7 @@ class Biconomy extends events_1.default {
                     headers: {
                         'x-api-key': this.apiKey,
                         'Content-Type': 'application/json;charset=utf-8',
+                        version: config_1.config.PACKAGE_VERSION,
                     },
                 });
                 const { data } = response.data;
@@ -287,13 +288,9 @@ class Biconomy extends events_1.default {
                         this.dappApiMap[`${contractAddress.toLowerCase()}-${method}`] = metaApi;
                     });
                 }
-                console.log('dappApiMap', this.dappApiMap);
-                console.log('interfaceMap', this.interfaceMap);
-                console.log('dapp data fetched');
             }
             catch (error) {
-                console.log(error);
-                (0, utils_1.logMessage)(JSON.stringify(error));
+                (0, utils_1.logErrorMessage)(error);
                 throw error;
             }
         });

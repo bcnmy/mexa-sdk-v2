@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.metaTransactionType = exports.domainType = exports.STATUS = exports.RESPONSE_BODY_CODES = exports.HTTP_CODES = exports.BICONOMY_RESPONSE_CODES = exports.RESPONSE_CODES = exports.EVENTS = exports.config = void 0;
 exports.config = {
+    PACKAGE_VERSION: process.env.npm_package_version || '1.0.4',
     SCW: 'SCW',
     metaEntryPointBaseUrl: 'https://gasless-meta.prod.biconomy.io',
     webSocketConnectionUrl: 'wss://gasless-ws.prod.biconomy.io/connection/websocket',
