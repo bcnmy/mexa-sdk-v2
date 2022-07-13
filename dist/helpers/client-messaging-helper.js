@@ -28,7 +28,7 @@ const mexaSdkClientMessenger = (engine, transactionData) => __awaiter(void 0, vo
             onHashGenerated: (tx) => {
                 (0, utils_1.logMessage)(`Tx Hash generated message received at client ${tx.transactionId} and hash ${tx.transactionHash}`);
                 engine.emit('txHashGenerated', {
-                    msg: 'hash generated',
+                    msg: 'txn hash generated',
                     id: tx.transactionId,
                     hash: tx.transactionHash,
                 });
@@ -38,6 +38,14 @@ const mexaSdkClientMessenger = (engine, transactionData) => __awaiter(void 0, vo
                 engine.emit('onError', {
                     error: errorResponseData.error,
                     transactionId: errorResponseData.transactionId,
+                });
+            },
+            onHashChanged: (tx) => {
+                (0, utils_1.logMessage)(`Tx Hash changed message received at client ${tx.transactionId} and hash ${tx.transactionHash}`);
+                engine.emit('txHashChanged', {
+                    msg: 'txn hash changed',
+                    id: tx.transactionId,
+                    hash: tx.transactionHash,
                 });
             },
         });

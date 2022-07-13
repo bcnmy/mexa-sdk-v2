@@ -23,7 +23,7 @@ export const mexaSdkClientMessenger = async (
         logMessage(`Tx Hash generated message received at client ${tx.transactionId} and hash ${tx.transactionHash}`);
 
         engine.emit('txHashGenerated', {
-          msg: 'hash generated',
+          msg: 'txn hash generated',
           id: tx.transactionId,
           hash: tx.transactionHash,
         });
@@ -33,6 +33,15 @@ export const mexaSdkClientMessenger = async (
         engine.emit('onError', {
           error: errorResponseData.error,
           transactionId: errorResponseData.transactionId,
+        });
+      },
+      onHashChanged: (tx: { transactionId: string; transactionHash: string; }) => {
+        logMessage(`Tx Hash changed message received at client ${tx.transactionId} and hash ${tx.transactionHash}`);
+
+        engine.emit('txHashChanged', {
+          msg: 'txn hash changed',
+          id: tx.transactionId,
+          hash: tx.transactionHash,
         });
       },
     });

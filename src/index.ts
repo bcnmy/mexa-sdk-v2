@@ -151,7 +151,7 @@ export class Biconomy extends EventEmitter {
 
   proxyProvider = {
     // Difference between send and request
-    get: async (target: ExternalProvider, prop: string, ...args: any[]) => {
+    get: (target: ExternalProvider, prop: string, ...args: any[]) => {
       switch (prop) {
         case 'send':
           return this.handleRpcSend.bind(this);
@@ -166,15 +166,15 @@ export class Biconomy extends EventEmitter {
     },
   };
 
-  handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback) {
+  async handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback) {
     const fallback = () => this.externalProvider.send?.(payload, callback);
     const { method, params } = payload;
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this.handleSendTransaction({ params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return this.sendSignedTransaction({ params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -183,15 +183,15 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  handleRpcSendType2(method: string, params?: Array<unknown>) {
+  async handleRpcSendType2(method: string, params?: Array<unknown>) {
     // @ts-ignore
     const fallback = () => this.externalProvider.send?.(method, params);
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this.handleSendTransaction({ params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return this.sendSignedTransaction({ params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -200,16 +200,16 @@ export class Biconomy extends EventEmitter {
     }
   }
 
-  handleRpcSendType3(payload: JsonRpcRequest) {
+  async handleRpcSendType3(payload: JsonRpcRequest) {
     // @ts-ignore
     const fallback = () => this.externalProvider.send?.(payload);
     const { method, params } = payload;
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this.handleSendTransaction({ params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return this.sendSignedTransaction({ params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
@@ -250,39 +250,39 @@ export class Biconomy extends EventEmitter {
     return this.handleRpcSendType1(args[0] as JsonRpcRequest, args[1] as JsonRpcCallback);
   }
 
-  handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback) {
+  async handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback) {
     const fallback = () => this.externalProvider.sendAsync?.(payload, callback);
 
     const { method, params } = payload;
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this.handleSendTransaction({ params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return this.sendSignedTransaction({ params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
           return fallback();
       }
     } catch (e) {
-      logMessage(`Request failed with error: ${logErrorMessage(e)}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${JSON.stringify(e)}. Falling back to default provider`);
       return fallback();
     }
   }
 
-  handleRpcRequest({ method, params } : { method: string, params: string[] }) {
+  async handleRpcRequest({ method, params } : { method: string, params: string[] }) {
     const fallback = () => this.externalProvider.request?.({ method, params });
 
     try {
       switch (method) {
         case 'eth_sendTransaction':
-          return this.handleSendTransaction({ params, fallback });
+          return await this.handleSendTransaction({ params, fallback });
         case 'eth_sendRawTransaction':
-          return this.sendSignedTransaction({ params, fallback });
+          return await this.sendSignedTransaction({ params, fallback });
         default:
-          return fallback();
+          return await fallback();
       }
     } catch (e) {
-      logMessage(`Request failed with error: ${logErrorMessage(e)}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${JSON.stringify(e)}. Falling back to default provider`);
       return fallback();
     }
   }

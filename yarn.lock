@@ -1518,10 +1518,10 @@ functions-have-names@^1.2.2:
   resolved "https://registry.yarnpkg.com/functions-have-names/-/functions-have-names-1.2.3.tgz#0404fe4ee2ba2f607f0e0ec3c80bae994133b834"
   integrity sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==
 
-gasless-messaging-sdk@^0.0.6:
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/gasless-messaging-sdk/-/gasless-messaging-sdk-0.0.6.tgz#e98b07ee8a2baabd16e85ced37ca43cccab556b6"
-  integrity sha512-bJtbeXFC/9FrXcFi2qvSD9DAFitcgw/8FT36g5c9n5kEY/YZMpZPrbfJySrJFdkqCGubHnNfOJYLK4IFVs/m6Q==
+gasless-messaging-sdk@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/gasless-messaging-sdk/-/gasless-messaging-sdk-0.0.7.tgz#fe4acb01a1f013434c6a4f70d8ecbc2f2c007105"
+  integrity sha512-npKKgpzkYVl6LCtl0NrsNZSNRqelH14Pfnbh/kXTY45xgF9TgCPBd2mlEl5PQeB/aoSxut/E0at1vR25RW4H5Q==
   dependencies:
     "@types/amqplib" "^0.8.2"
     "@types/jsonwebtoken" "^8.5.8"

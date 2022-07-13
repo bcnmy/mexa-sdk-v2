@@ -63,17 +63,17 @@ export declare class Biconomy extends EventEmitter {
     constructor(provider: ExternalProvider, options: OptionsType);
     private proxyFactory;
     proxyProvider: {
-        get: (target: ExternalProvider, prop: string, ...args: any[]) => Promise<any>;
+        get: (target: ExternalProvider, prop: string, ...args: any[]) => any;
     };
-    handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback): void | Promise<any>;
-    handleRpcSendType2(method: string, params?: Array<unknown>): void | Promise<any>;
-    handleRpcSendType3(payload: JsonRpcRequest): void | Promise<any>;
-    handleRpcSend(...args: any[]): void | Promise<any>;
-    handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback): void | Promise<any>;
+    handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback): Promise<any>;
+    handleRpcSendType2(method: string, params?: Array<unknown>): Promise<any>;
+    handleRpcSendType3(payload: JsonRpcRequest): Promise<any>;
+    handleRpcSend(...args: any[]): Promise<any>;
+    handleRpcSendAsync(payload: JsonRpcRequest, callback: JsonRpcCallback): Promise<any>;
     handleRpcRequest({ method, params }: {
         method: string;
         params: string[];
-    }): Promise<any> | undefined;
+    }): Promise<any>;
     /**
      * Function to initialize the biconomy object with DApp information.
      * It fetches the dapp's smart contract from biconomy database

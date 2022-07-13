@@ -55,7 +55,7 @@ class Biconomy extends events_1.default {
         this.buildSignatureCustomPersonalSignMetaTransaction = meta_transaction_custom_helpers_1.buildSignatureCustomPersonalSignMetaTransaction;
         this.proxyProvider = {
             // Difference between send and request
-            get: (target, prop, ...args) => __awaiter(this, void 0, void 0, function* () {
+            get: (target, prop, ...args) => {
                 switch (prop) {
                     case 'send':
                         return this.handleRpcSend.bind(this);
@@ -67,7 +67,7 @@ class Biconomy extends events_1.default {
                         break;
                 }
                 return Reflect.get(target, prop, ...args);
-            }),
+            },
         };
         (0, utils_1.validateOptions)(options);
         this.apiKey = options.apiKey;
@@ -85,56 +85,62 @@ class Biconomy extends events_1.default {
         return new Proxy(this.externalProvider, this.proxyProvider);
     }
     handleRpcSendType1(payload, callback) {
-        const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).send) === null || _b === void 0 ? void 0 : _b.call(_a, payload, callback); };
-        const { method, params } = payload;
-        try {
-            switch (method) {
-                case 'eth_sendTransaction':
-                    return this.handleSendTransaction({ params, fallback });
-                case 'eth_sendRawTransaction':
-                    return this.sendSignedTransaction({ params, fallback });
-                default:
-                    return fallback();
+        return __awaiter(this, void 0, void 0, function* () {
+            const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).send) === null || _b === void 0 ? void 0 : _b.call(_a, payload, callback); };
+            const { method, params } = payload;
+            try {
+                switch (method) {
+                    case 'eth_sendTransaction':
+                        return yield this.handleSendTransaction({ params, fallback });
+                    case 'eth_sendRawTransaction':
+                        return yield this.sendSignedTransaction({ params, fallback });
+                    default:
+                        return fallback();
+                }
             }
-        }
-        catch (e) {
-            return fallback();
-        }
+            catch (e) {
+                return fallback();
+            }
+        });
     }
     handleRpcSendType2(method, params) {
-        // @ts-ignore
-        const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).send) === null || _b === void 0 ? void 0 : _b.call(_a, method, params); };
-        try {
-            switch (method) {
-                case 'eth_sendTransaction':
-                    return this.handleSendTransaction({ params, fallback });
-                case 'eth_sendRawTransaction':
-                    return this.sendSignedTransaction({ params, fallback });
-                default:
-                    return fallback();
+        return __awaiter(this, void 0, void 0, function* () {
+            // @ts-ignore
+            const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).send) === null || _b === void 0 ? void 0 : _b.call(_a, method, params); };
+            try {
+                switch (method) {
+                    case 'eth_sendTransaction':
+                        return yield this.handleSendTransaction({ params, fallback });
+                    case 'eth_sendRawTransaction':
+                        return yield this.sendSignedTransaction({ params, fallback });
+                    default:
+                        return fallback();
+                }
             }
-        }
-        catch (e) {
-            return fallback();
-        }
+            catch (e) {
+                return fallback();
+            }
+        });
     }
     handleRpcSendType3(payload) {
-        // @ts-ignore
-        const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).send) === null || _b === void 0 ? void 0 : _b.call(_a, payload); };
-        const { method, params } = payload;
-        try {
-            switch (method) {
-                case 'eth_sendTransaction':
-                    return this.handleSendTransaction({ params, fallback });
-                case 'eth_sendRawTransaction':
-                    return this.sendSignedTransaction({ params, fallback });
-                default:
-                    return fallback();
+        return __awaiter(this, void 0, void 0, function* () {
+            // @ts-ignore
+            const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).send) === null || _b === void 0 ? void 0 : _b.call(_a, payload); };
+            const { method, params } = payload;
+            try {
+                switch (method) {
+                    case 'eth_sendTransaction':
+                        return yield this.handleSendTransaction({ params, fallback });
+                    case 'eth_sendRawTransaction':
+                        return yield this.sendSignedTransaction({ params, fallback });
+                    default:
+                        return fallback();
+                }
             }
-        }
-        catch (e) {
-            return fallback();
-        }
+            catch (e) {
+                return fallback();
+            }
+        });
     }
     handleRpcSend(...args) {
         // provider.send is deprecated, but it is still commonly used, so we need to handle it
@@ -161,39 +167,43 @@ class Biconomy extends events_1.default {
         return this.handleRpcSendType1(args[0], args[1]);
     }
     handleRpcSendAsync(payload, callback) {
-        const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).sendAsync) === null || _b === void 0 ? void 0 : _b.call(_a, payload, callback); };
-        const { method, params } = payload;
-        try {
-            switch (method) {
-                case 'eth_sendTransaction':
-                    return this.handleSendTransaction({ params, fallback });
-                case 'eth_sendRawTransaction':
-                    return this.sendSignedTransaction({ params, fallback });
-                default:
-                    return fallback();
+        return __awaiter(this, void 0, void 0, function* () {
+            const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).sendAsync) === null || _b === void 0 ? void 0 : _b.call(_a, payload, callback); };
+            const { method, params } = payload;
+            try {
+                switch (method) {
+                    case 'eth_sendTransaction':
+                        return yield this.handleSendTransaction({ params, fallback });
+                    case 'eth_sendRawTransaction':
+                        return yield this.sendSignedTransaction({ params, fallback });
+                    default:
+                        return fallback();
+                }
             }
-        }
-        catch (e) {
-            (0, utils_1.logMessage)(`Request failed with error: ${(0, utils_1.logErrorMessage)(e)}. Falling back to default provider`);
-            return fallback();
-        }
+            catch (e) {
+                (0, utils_1.logMessage)(`Request failed with error: ${JSON.stringify(e)}. Falling back to default provider`);
+                return fallback();
+            }
+        });
     }
     handleRpcRequest({ method, params }) {
-        const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).request) === null || _b === void 0 ? void 0 : _b.call(_a, { method, params }); };
-        try {
-            switch (method) {
-                case 'eth_sendTransaction':
-                    return this.handleSendTransaction({ params, fallback });
-                case 'eth_sendRawTransaction':
-                    return this.sendSignedTransaction({ params, fallback });
-                default:
-                    return fallback();
+        return __awaiter(this, void 0, void 0, function* () {
+            const fallback = () => { var _a, _b; return (_b = (_a = this.externalProvider).request) === null || _b === void 0 ? void 0 : _b.call(_a, { method, params }); };
+            try {
+                switch (method) {
+                    case 'eth_sendTransaction':
+                        return yield this.handleSendTransaction({ params, fallback });
+                    case 'eth_sendRawTransaction':
+                        return yield this.sendSignedTransaction({ params, fallback });
+                    default:
+                        return yield fallback();
+                }
             }
-        }
-        catch (e) {
-            (0, utils_1.logMessage)(`Request failed with error: ${(0, utils_1.logErrorMessage)(e)}. Falling back to default provider`);
-            return fallback();
-        }
+            catch (e) {
+                (0, utils_1.logMessage)(`Request failed with error: ${JSON.stringify(e)}. Falling back to default provider`);
+                return fallback();
+            }
+        });
     }
     /**
      * Function to initialize the biconomy object with DApp information.
