@@ -6,5 +6,5 @@ import type { Biconomy } from '..';
  * @param account User selected account on current wallet
  * @param data Data to be sent to biconomy server having transaction data
  * */
-export declare function sendTransaction(this: Biconomy, account: string, data: any, fallback: () => Promise<any> | void | undefined): Promise<any>;
+export declare function sendTransaction(this: Biconomy, account: string, data: any, fallback: () => Promise<any> | void | undefined): Promise<unknown>;
 //# sourceMappingURL=send-transaction-helper.d.ts.map

@@ -214,7 +214,7 @@ function sendSignedTransaction(sendSignedTransactionParams) {
                                 to,
                                 signatureType: signatureType ? this.eip712Sign : this.personalSign,
                             };
-                            yield this.sendTransaction(account, trustedForwarderMetaTransactionData, fallback);
+                            return yield this.sendTransaction(account, trustedForwarderMetaTransactionData, fallback);
                         }
                         paramArray.push(...methodInfo.args);
                         const defaultMetaTransactionData = {
@@ -224,22 +224,16 @@ function sendSignedTransaction(sendSignedTransactionParams) {
                             gasLimit: decodedTx.gasLimit.toString(),
                             to: decodedTx.to.toLowerCase(),
                         };
-                        yield this.sendTransaction(account, defaultMetaTransactionData, fallback);
+                        return yield this.sendTransaction(account, defaultMetaTransactionData, fallback);
                     }
-                    else {
-                        const error = (0, utils_1.formatMessage)(config_1.RESPONSE_CODES.INVALID_PAYLOAD, 'Not able to decode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.');
-                        return error;
-                    }
-                }
-                else {
-                    const error = (0, utils_1.formatMessage)(config_1.RESPONSE_CODES.INVALID_PAYLOAD, `Invalid payload data ${JSON.stringify(params[0])}.rawTransaction is required in param object`);
+                    const error = (0, utils_1.formatMessage)(config_1.RESPONSE_CODES.INVALID_PAYLOAD, 'Not able to decode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.');
                     return error;
                 }
-            }
-            else {
-                const error = (0, utils_1.formatMessage)(config_1.RESPONSE_CODES.INVALID_PAYLOAD, `Invalid payload data ${JSON.stringify(params)}. Non empty Array expected in params key`);
+                const error = (0, utils_1.formatMessage)(config_1.RESPONSE_CODES.INVALID_PAYLOAD, `Invalid payload data ${JSON.stringify(params[0])}.rawTransaction is required in param object`);
                 return error;
             }
+            const error = (0, utils_1.formatMessage)(config_1.RESPONSE_CODES.INVALID_PAYLOAD, `Invalid payload data ${JSON.stringify(params)}. Non empty Array expected in params key`);
+            return error;
         }
         catch (error) {
             (0, utils_1.logMessage)(error);

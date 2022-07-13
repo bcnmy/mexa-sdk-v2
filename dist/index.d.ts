@@ -12,8 +12,6 @@ import { getSystemInfo } from './helpers/get-system-info-helper';
 import { getSignatureEIP712, getSignaturePersonal } from './helpers/signature-helpers';
 import { sendTransaction } from './helpers/send-transaction-helper';
 import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonalSignMetaTransaction } from './helpers/meta-transaction-custom-helpers';
-import { BiconomyWalletClient } from './BiconomyWalletClient';
-import { GnosisWalletClient } from './GnosisWalletClient';
 export declare class Biconomy extends EventEmitter {
     apiKey: string;
     private externalProvider;
@@ -55,8 +53,6 @@ export declare class Biconomy extends EventEmitter {
     contractAddresses?: string[];
     buildSignatureCustomEIP712MetaTransaction: typeof buildSignatureCustomEIP712MetaTransaction;
     buildSignatureCustomPersonalSignMetaTransaction: typeof buildSignatureCustomPersonalSignMetaTransaction;
-    biconomyWalletClient?: BiconomyWalletClient;
-    gnosiWalletClient?: GnosisWalletClient;
     clientMessenger: any;
     /**
      * constructor would initiliase providers and set values passed in options
@@ -67,7 +63,7 @@ export declare class Biconomy extends EventEmitter {
     constructor(provider: ExternalProvider, options: OptionsType);
     private proxyFactory;
     proxyProvider: {
-        get: (target: ExternalProvider, prop: string, ...args: any[]) => any;
+        get: (target: ExternalProvider, prop: string, ...args: any[]) => Promise<any>;
     };
     handleRpcSendType1(payload: JsonRpcRequest, callback: JsonRpcCallback): void | Promise<any>;
     handleRpcSendType2(method: string, params?: Array<unknown>): void | Promise<any>;

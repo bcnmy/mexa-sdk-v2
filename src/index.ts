@@ -31,14 +31,11 @@ import { config } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
-// import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 import {
   getSignatureEIP712, getSignaturePersonal,
 } from './helpers/signature-helpers';
 import { sendTransaction } from './helpers/send-transaction-helper';
 import { buildSignatureCustomEIP712MetaTransaction, buildSignatureCustomPersonalSignMetaTransaction } from './helpers/meta-transaction-custom-helpers';
-import { BiconomyWalletClient } from './BiconomyWalletClient';
-import { GnosisWalletClient } from './GnosisWalletClient';
 
 export class Biconomy extends EventEmitter {
   apiKey: string;
@@ -121,10 +118,6 @@ export class Biconomy extends EventEmitter {
 
   buildSignatureCustomPersonalSignMetaTransaction = buildSignatureCustomPersonalSignMetaTransaction;
 
-  biconomyWalletClient?: BiconomyWalletClient;
-
-  gnosiWalletClient?: GnosisWalletClient;
-
   clientMessenger: any;
 
   /**
@@ -158,7 +151,7 @@ export class Biconomy extends EventEmitter {
 
   proxyProvider = {
     // Difference between send and request
-    get: (target: ExternalProvider, prop: string, ...args: any[]) => {
+    get: async (target: ExternalProvider, prop: string, ...args: any[]) => {
       switch (prop) {
         case 'send':
           return this.handleRpcSend.bind(this);
@@ -271,7 +264,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${logErrorMessage(e)}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -289,7 +282,7 @@ export class Biconomy extends EventEmitter {
           return fallback();
       }
     } catch (e) {
-      logMessage(`Request failed with error: ${e}. Falling back to default provider`);
+      logMessage(`Request failed with error: ${logErrorMessage(e)}. Falling back to default provider`);
       return fallback();
     }
   }
@@ -318,33 +311,6 @@ export class Biconomy extends EventEmitter {
           throw new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
         }
         await this.getSystemInfo(providerNetworkId);
-
-        if (
-          this.walletFactoryAddress
-           && this.baseWalletAddress
-            && this.entryPointAddress
-             && this.handlerAddress
-        ) {
-          this.biconomyWalletClient = new BiconomyWalletClient({
-            provider: this.provider,
-            ethersProvider: this.ethersProvider,
-            walletFactoryAddress: this.walletFactoryAddress,
-            baseWalletAddress: this.baseWalletAddress,
-            entryPointAddress: this.entryPointAddress,
-            handlerAddress: this.handlerAddress,
-            networkId: this.networkId,
-          });
-        }
-
-        if (this.gnosisSafeProxyFactoryAddress && this.gnosisSafeAddress) {
-          this.gnosiWalletClient = new GnosisWalletClient({
-            ethersProvider: this.ethersProvider,
-            networkId: this.networkId,
-            apiKey: this.apiKey,
-            gnosisSafeProxyFactoryAddress: this.gnosisSafeProxyFactoryAddress,
-            gnosisSafeAddress: this.gnosisSafeAddress,
-          });
-        }
       } else {
         throw new Error('Could not get network version');
       }

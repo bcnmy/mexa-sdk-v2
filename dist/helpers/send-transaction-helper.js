@@ -28,7 +28,7 @@ function sendTransaction(account, data, fallback) {
                 return undefined;
             }
             const options = {
-                uri: `${config_1.config.metaEntryPointBaseUrl}/api/v2/meta-tx/native`,
+                uri: `${config_1.config.metaEntryPointBaseUrl}/api/v1/native`,
                 headers: {
                     'x-api-key': this.apiKey,
                     'Content-Type': 'application/json;charset=utf-8',
@@ -42,21 +42,29 @@ function sendTransaction(account, data, fallback) {
             const response = yield (0, request_promise_1.post)(options);
             (0, utils_1.logMessage)(response);
             const result = JSON.parse(response);
-            if (result.transactionId && result.flag === config_1.BICONOMY_RESPONSE_CODES.SUCCESS) {
-                yield (0, client_messaging_helper_1.mexaSdkClientMessenger)(this, {
-                    transactionId: result.transactionId,
+            if (result.data
+                && result.data.transactionId
+                && result.flag === config_1.BICONOMY_RESPONSE_CODES.SUCCESS) {
+                (0, client_messaging_helper_1.mexaSdkClientMessenger)(this, {
+                    transactionId: result.data.transactionId,
                 });
+                return {
+                    transactionId: result.data.transactionId,
+                };
             }
-            else if (result.flag === config_1.BICONOMY_RESPONSE_CODES.BAD_REQUEST) {
+            if (result.flag === config_1.BICONOMY_RESPONSE_CODES.BAD_REQUEST) {
                 yield fallback();
+                return {
+                    transactionId: result.data.transactionId,
+                };
             }
             const error = {};
             error.code = result.flag || result.code;
-            if (result.flag === config_1.BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
-                error.code = config_1.RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;
-            }
-            error.message = result.log || result.message;
-            return error.toString();
+            error.message = result.log || result.message || 'Error in native meta api call';
+            return {
+                error: error.toString(),
+                transcionId: result.data.transactionId,
+            };
         }
         catch (error) {
             (0, utils_1.logErrorMessage)(error);

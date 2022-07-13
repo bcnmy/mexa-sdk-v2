@@ -254,7 +254,11 @@ export async function sendSignedTransaction(
               to,
               signatureType: signatureType ? this.eip712Sign : this.personalSign,
             };
-            await this.sendTransaction(account, trustedForwarderMetaTransactionData, fallback);
+            return await this.sendTransaction(
+              account,
+              trustedForwarderMetaTransactionData,
+              fallback,
+            );
           }
           paramArray.push(...methodInfo.args);
 
@@ -266,32 +270,29 @@ export async function sendSignedTransaction(
             to: decodedTx.to.toLowerCase(),
           };
 
-          await this.sendTransaction(account, defaultMetaTransactionData, fallback);
-        } else {
-          const error = formatMessage(
-            RESPONSE_CODES.INVALID_PAYLOAD,
-            'Not able to decode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.',
-          );
-          return error;
+          return await this.sendTransaction(account, defaultMetaTransactionData, fallback);
         }
-      } else {
         const error = formatMessage(
           RESPONSE_CODES.INVALID_PAYLOAD,
-          `Invalid payload data ${JSON.stringify(
-            params[0],
-          )}.rawTransaction is required in param object`,
+          'Not able to decode the data in rawTransaction using ethereum-tx-decoder. Please check the data sent.',
         );
         return error;
       }
-    } else {
       const error = formatMessage(
         RESPONSE_CODES.INVALID_PAYLOAD,
         `Invalid payload data ${JSON.stringify(
-          params,
-        )}. Non empty Array expected in params key`,
+          params[0],
+        )}.rawTransaction is required in param object`,
       );
       return error;
     }
+    const error = formatMessage(
+      RESPONSE_CODES.INVALID_PAYLOAD,
+      `Invalid payload data ${JSON.stringify(
+        params,
+      )}. Non empty Array expected in params key`,
+    );
+    return error;
   } catch (error) {
     logMessage(error);
     return error;

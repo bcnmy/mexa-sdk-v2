@@ -22,6 +22,7 @@ const mexaSdkClientMessenger = (engine, transactionData) => __awaiter(void 0, vo
                     msg: 'txn mined',
                     id: tx.transactionId,
                     hash: tx.transactionHash,
+                    receipt: tx.receipt,
                 });
             },
             onHashGenerated: (tx) => {

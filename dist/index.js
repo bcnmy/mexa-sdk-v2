@@ -27,12 +27,9 @@ const config_1 = require("./config");
 const handle_send_transaction_helper_1 = require("./helpers/handle-send-transaction-helper");
 const send_signed_transaction_helper_1 = require("./helpers/send-signed-transaction-helper");
 const get_system_info_helper_1 = require("./helpers/get-system-info-helper");
-// import { getForwardRequestAndMessageToSign } from './helpers/meta-transaction-EIP2771-helpers';
 const signature_helpers_1 = require("./helpers/signature-helpers");
 const send_transaction_helper_1 = require("./helpers/send-transaction-helper");
 const meta_transaction_custom_helpers_1 = require("./helpers/meta-transaction-custom-helpers");
-const BiconomyWalletClient_1 = require("./BiconomyWalletClient");
-const GnosisWalletClient_1 = require("./GnosisWalletClient");
 class Biconomy extends events_1.default {
     /**
      * constructor would initiliase providers and set values passed in options
@@ -58,7 +55,7 @@ class Biconomy extends events_1.default {
         this.buildSignatureCustomPersonalSignMetaTransaction = meta_transaction_custom_helpers_1.buildSignatureCustomPersonalSignMetaTransaction;
         this.proxyProvider = {
             // Difference between send and request
-            get: (target, prop, ...args) => {
+            get: (target, prop, ...args) => __awaiter(this, void 0, void 0, function* () {
                 switch (prop) {
                     case 'send':
                         return this.handleRpcSend.bind(this);
@@ -70,7 +67,7 @@ class Biconomy extends events_1.default {
                         break;
                 }
                 return Reflect.get(target, prop, ...args);
-            },
+            }),
         };
         (0, utils_1.validateOptions)(options);
         this.apiKey = options.apiKey;
@@ -177,7 +174,7 @@ class Biconomy extends events_1.default {
             }
         }
         catch (e) {
-            (0, utils_1.logMessage)(`Request failed with error: ${e}. Falling back to default provider`);
+            (0, utils_1.logMessage)(`Request failed with error: ${(0, utils_1.logErrorMessage)(e)}. Falling back to default provider`);
             return fallback();
         }
     }
@@ -194,7 +191,7 @@ class Biconomy extends events_1.default {
             }
         }
         catch (e) {
-            (0, utils_1.logMessage)(`Request failed with error: ${e}. Falling back to default provider`);
+            (0, utils_1.logMessage)(`Request failed with error: ${(0, utils_1.logErrorMessage)(e)}. Falling back to default provider`);
             return fallback();
         }
     }
@@ -223,29 +220,6 @@ class Biconomy extends events_1.default {
                         throw new Error(`Current networkId ${providerNetworkId} is different from dapp network id registered on mexa dashboard ${this.networkId}`);
                     }
                     yield this.getSystemInfo(providerNetworkId);
-                    if (this.walletFactoryAddress
-                        && this.baseWalletAddress
-                        && this.entryPointAddress
-                        && this.handlerAddress) {
-                        this.biconomyWalletClient = new BiconomyWalletClient_1.BiconomyWalletClient({
-                            provider: this.provider,
-                            ethersProvider: this.ethersProvider,
-                            walletFactoryAddress: this.walletFactoryAddress,
-                            baseWalletAddress: this.baseWalletAddress,
-                            entryPointAddress: this.entryPointAddress,
-                            handlerAddress: this.handlerAddress,
-                            networkId: this.networkId,
-                        });
-                    }
-                    if (this.gnosisSafeProxyFactoryAddress && this.gnosisSafeAddress) {
-                        this.gnosiWalletClient = new GnosisWalletClient_1.GnosisWalletClient({
-                            ethersProvider: this.ethersProvider,
-                            networkId: this.networkId,
-                            apiKey: this.apiKey,
-                            gnosisSafeProxyFactoryAddress: this.gnosisSafeProxyFactoryAddress,
-                            gnosisSafeAddress: this.gnosisSafeAddress,
-                        });
-                    }
                 }
                 else {
                     throw new Error('Could not get network version');

@@ -54,7 +54,6 @@ function handleSendTransaction(handleSendTransactionParams) {
                 throw new Error('Forwarder Address is undefined');
             }
             const { params, fallback, } = handleSendTransactionParams;
-            console.log('hello in mexa sdk v2');
             if (params && params[0] && params[0].to) {
                 const to = params[0].to.toLowerCase();
                 if (this.interfaceMap[to]) {

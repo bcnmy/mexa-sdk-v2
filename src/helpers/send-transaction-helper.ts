@@ -1,6 +1,6 @@
 import { post } from 'request-promise';
 import type { Biconomy } from '..';
-import { BICONOMY_RESPONSE_CODES, config, RESPONSE_CODES } from '../config';
+import { BICONOMY_RESPONSE_CODES, config } from '../config';
 import { logErrorMessage, logMessage } from '../utils';
 import { mexaSdkClientMessenger } from './client-messaging-helper';
 
@@ -23,7 +23,7 @@ export async function sendTransaction(
     }
 
     const options = {
-      uri: `${config.metaEntryPointBaseUrl}/api/v2/meta-tx/native`,
+      uri: `${config.metaEntryPointBaseUrl}/api/v1/native`,
       headers: {
         'x-api-key': this.apiKey,
         'Content-Type': 'application/json;charset=utf-8',
@@ -40,23 +40,33 @@ export async function sendTransaction(
     logMessage(response);
     const result = JSON.parse(response);
 
-    if (result.transactionId && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS) {
-      await mexaSdkClientMessenger(
+    if (
+      result.data
+       && result.data.transactionId
+       && result.flag === BICONOMY_RESPONSE_CODES.SUCCESS
+    ) {
+      mexaSdkClientMessenger(
         this,
         {
-          transactionId: result.transactionId,
+          transactionId: result.data.transactionId,
         },
       );
-    } else if (result.flag === BICONOMY_RESPONSE_CODES.BAD_REQUEST) {
+      return {
+        transactionId: result.data.transactionId,
+      };
+    } if (result.flag === BICONOMY_RESPONSE_CODES.BAD_REQUEST) {
       await fallback();
+      return {
+        transactionId: result.data.transactionId,
+      };
     }
     const error: any = {};
     error.code = result.flag || result.code;
-    if (result.flag === BICONOMY_RESPONSE_CODES.USER_CONTRACT_NOT_FOUND) {
-      error.code = RESPONSE_CODES.USER_CONTRACT_NOT_FOUND;
-    }
-    error.message = result.log || result.message;
-    return error.toString();
+    error.message = result.log || result.message || 'Error in native meta api call';
+    return {
+      error: error.toString(),
+      transcionId: result.data.transactionId,
+    };
   } catch (error) {
     logErrorMessage(error);
     return error;
