@@ -22,6 +22,7 @@ const ethers_1 = require("ethers");
 const axios_1 = __importDefault(require("axios"));
 const gasless_messaging_sdk_1 = require("gasless-messaging-sdk");
 const isomorphic_ws_1 = __importDefault(require("isomorphic-ws"));
+const serialize_error_1 = require("serialize-error");
 const utils_1 = require("./utils");
 const config_1 = require("./config");
 const handle_send_transaction_helper_1 = require("./helpers/handle-send-transaction-helper");
@@ -276,6 +277,32 @@ class Biconomy extends events_1.default {
             catch (error) {
                 (0, utils_1.logErrorMessage)(error);
                 throw error;
+            }
+        });
+    }
+    getTransactionStatus(transactionId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const response = yield axios_1.default.get(`${config_1.config.metaEntryPointBaseUrl}/api/v1/sdk/transaction-status`, {
+                    params: {
+                        transactionId,
+                    },
+                    headers: {
+                        'x-api-key': this.apiKey,
+                        'Content-Type': 'application/json;charset=utf-8',
+                        version: config_1.config.PACKAGE_VERSION,
+                    },
+                });
+                const { data } = response.data;
+                return Object.assign({ flag: config_1.BICONOMY_RESPONSE_CODES.SUCCESS }, data);
+            }
+            catch (error) {
+                (0, utils_1.logErrorMessage)(error);
+                return {
+                    flag: config_1.BICONOMY_RESPONSE_CODES.ERROR_RESPONSE,
+                    code: config_1.HTTP_CODES.INTERNAL_SERVER_ERROR,
+                    error: (0, serialize_error_1.serializeError)(error),
+                };
             }
         });
     }

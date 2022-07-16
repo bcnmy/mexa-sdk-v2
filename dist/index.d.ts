@@ -82,5 +82,6 @@ export declare class Biconomy extends EventEmitter {
      * */
     init(): Promise<unknown>;
     getDappData(): Promise<void>;
+    getTransactionStatus(transactionId: string): Promise<any>;
 }
 //# sourceMappingURL=index.d.ts.map
