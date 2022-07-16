@@ -8,6 +8,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import { ClientMessenger } from 'gasless-messaging-sdk';
 import WebSocket from 'isomorphic-ws';
+import { serializeError } from 'serialize-error';
 import {
   DappApiMapType,
   ForwarderDomainData,
@@ -27,7 +28,7 @@ import {
   logErrorMessage,
   logMessage, validateOptions,
 } from './utils';
-import { config } from './config';
+import { BICONOMY_RESPONSE_CODES, config, HTTP_CODES } from './config';
 import { handleSendTransaction } from './helpers/handle-send-transaction-helper';
 import { sendSignedTransaction } from './helpers/send-signed-transaction-helper';
 import { getSystemInfo } from './helpers/get-system-info-helper';
@@ -364,6 +365,36 @@ export class Biconomy extends EventEmitter {
     } catch (error) {
       logErrorMessage(error);
       throw error;
+    }
+  }
+
+  async getTransactionStatus(transactionId: string) {
+    try {
+      const response = await axios.get(
+        `${config.metaEntryPointBaseUrl}/api/v1/sdk/transaction-status`,
+        {
+          params: {
+            transactionId,
+          },
+          headers: {
+            'x-api-key': this.apiKey,
+            'Content-Type': 'application/json;charset=utf-8',
+            version: config.PACKAGE_VERSION,
+          },
+        },
+      );
+      const { data } = response.data;
+      return {
+        flag: BICONOMY_RESPONSE_CODES.SUCCESS,
+        ...data,
+      };
+    } catch (error) {
+      logErrorMessage(error);
+      return {
+        flag: BICONOMY_RESPONSE_CODES.ERROR_RESPONSE,
+        code: HTTP_CODES.INTERNAL_SERVER_ERROR,
+        error: serializeError(error),
+      };
     }
   }
 }
